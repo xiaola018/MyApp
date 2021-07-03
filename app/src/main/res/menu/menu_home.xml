@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_home1"
+        android:title="连接"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/menu_home2"
+        app:showAsAction="always"
+        android:title=" "
+        android:icon="@mipmap/my_overflow_image">
+        <menu>
+            <item
+                android:id="@+id/abc"
+                android:actionLayout="@layout/layout_menu_print_now"
+                android:title=""
+                app:showAsAction="ifRoom"/>
+<!--            <group>
+                <item android:id="@+id/menu_home_child1"
+                    android:title="搜索城市"/>
+
+                <item android:id="@+id/menu_home_child2"
+                    android:title="更新城市"/>
+
+                <item android:id="@+id/menu_home_child3"
+                    android:actionLayout="@layout/layout_menu_print_now"
+                    android:title=""
+                    app:showAsAction="always"/>
+            </group>-->
+        </menu>
+    </item>
+
+
+</menu>

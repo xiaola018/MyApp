@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">MyApp</string>
+
+    <array name="array_home_tab_title">
+        <item>输入</item>
+        <item>导入</item>
+        <item>列表</item>
+    </array>
 </resources>
