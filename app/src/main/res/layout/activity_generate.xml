@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:ignore="MissingConstraints"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="15dp">
+
+    <!-- 每日樟树  生成张数 时间浮动 金额浮动 起始日期  第一张 第二张 -->
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        android:text="每日张数"
+        android:textSize="22sp"/>
+
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="60dp"
+        android:layout_marginStart="10dp"
+        android:textSize="22sp"
+        android:gravity="center"
+        android:textColor="@color/color_333333"
+        android:hint="1-5"
+        app:layout_constraintEnd_toStartOf="@id/textView2"
+        app:layout_constraintStart_toEndOf="@id/textView1"
+        android:layout_height="30dp"
+        android:background="@color/color_e1e1e1"/>
+
+    <EditText
+        android:id="@+id/editText2"
+        android:layout_width="60dp"
+        android:layout_height="30dp"
+        android:text="20"
+        android:gravity="center"
+        android:textSize="22sp"
+        android:textColor="@color/color_333333"
+        android:hint="1-100"
+        app:layout_constraintStart_toEndOf="@id/textView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/color_e1e1e1"/>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="0dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintStart_toEndOf="@id/editText1"
+        app:layout_constraintEnd_toStartOf="@id/editText2"
+        android:layout_height="wrap_content"
+        android:text="生成张数"
+        android:gravity="center"
+        android:textSize="22sp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
