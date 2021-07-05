@@ -1,59 +1,198 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:ignore="MissingConstraints"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="15dp">
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:ignore="MissingConstraints">
 
-    <!-- 每日樟树  生成张数 时间浮动 金额浮动 起始日期  第一张 第二张 -->
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="0dp"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        app:layout_constraintStart_toStartOf="parent"
-        android:text="每日张数"
-        android:textSize="22sp"/>
+        android:background="@color/teal_200"
+        app:navigationIcon="@mipmap/ic_back"
+        app:title="生成"
+        app:titleTextColor="@color/white" />
 
-    <EditText
-        android:id="@+id/editText1"
-        android:layout_width="60dp"
-        android:layout_marginStart="10dp"
-        android:textSize="22sp"
-        android:gravity="center"
-        android:textColor="@color/color_333333"
-        android:hint="1-5"
-        app:layout_constraintEnd_toStartOf="@id/textView2"
-        app:layout_constraintStart_toEndOf="@id/textView1"
-        android:layout_height="30dp"
-        android:background="@color/color_e1e1e1"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
 
-    <EditText
-        android:id="@+id/editText2"
-        android:layout_width="60dp"
-        android:layout_height="30dp"
-        android:text="20"
-        android:gravity="center"
-        android:textSize="22sp"
-        android:textColor="@color/color_333333"
-        android:hint="1-100"
-        app:layout_constraintStart_toEndOf="@id/textView2"
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="生成张数"
+            android:textSize="22sp" />
+
+        <EditText
+            android:id="@+id/editText_num"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:background="@color/color_e1e1e1"
+            android:gravity="center"
+            android:hint="1-5"
+            android:inputType="number"
+            android:textColor="@color/color_333333"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="生成张数"
+            android:textSize="22sp" />
+
+        <EditText
+            android:id="@+id/editText_generate_num"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:background="@color/color_e1e1e1"
+            android:gravity="center"
+            android:hint="1-100"
+            android:inputType="number"
+            android:textColor="@color/color_333333"
+            android:textSize="22sp" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="时间浮动"
+            android:textSize="22sp" />
+
+        <EditText
+            android:id="@+id/editText_time_float"
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:background="@color/color_e1e1e1"
+            android:gravity="center"
+            android:hint="1-5"
+            android:inputType="number"
+            android:selectAllOnFocus="true"
+            android:textColor="@color/color_333333"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="金额浮动"
+            android:textSize="22sp" />
+
+        <EditText
+            android:id="@+id/editText_price_float"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:background="@color/color_e1e1e1"
+            android:gravity="center"
+            android:hint="1-100"
+            android:inputType="number"
+            android:selectAllOnFocus="true"
+            android:textColor="@color/color_333333"
+            android:textSize="22sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/textView3" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <TextView
+            android:id="@+id/textView5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            android:gravity="center"
+            android:text="起始日期"
+            android:textSize="22sp"
+            app:layout_constraintTop_toBottomOf="@id/textView3" />
+
+        <TextView
+            android:id="@+id/tv_start_date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="9"
+            android:background="@color/color_e1e1e1"
+            android:gravity="center"
+            android:lines="1"
+            android:textColor="@color/color_333333"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/listLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="20dp"
+        android:layout_weight="9"
+        android:orientation="vertical"
+        android:scrollbars="none"
+        android:paddingStart="30dp"
+        android:paddingEnd="30dp"
+        app:layout_constraintBottom_toTopOf="@id/btn_sure"
         app:layout_constraintEnd_toEndOf="parent"
-        android:background="@color/color_e1e1e1"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textView5">
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="0dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        app:layout_constraintStart_toEndOf="@id/editText1"
-        app:layout_constraintEnd_toStartOf="@id/editText2"
+
+        <include layout="@layout/list_generate_recyclerview" />
+
+        <include layout="@layout/list_generate_recyclerview" />
+
+        <include layout="@layout/list_generate_recyclerview" />
+
+
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/btn_sure"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:text="生成张数"
-        android:gravity="center"
-        android:textSize="22sp"/>
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/shape_enable_true_8dp"
+        android:text="确  定"
+        android:textColor="@color/white"
+        android:textSize="24sp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>
