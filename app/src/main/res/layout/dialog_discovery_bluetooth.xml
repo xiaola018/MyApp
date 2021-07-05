@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="30dp"
+    android:orientation="vertical">
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_toEndOf="@id/textView"
+        android:layout_marginStart="10dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"/>
+
+    <TextView
+        android:id="@+id/textView"
+        android:text="可用设备..."
+        android:textColor="@color/color_333333"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_below="@id/textView"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_above="@id/btn_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <TextView
+        android:id="@+id/tv_no_data"
+        android:layout_below="@id/textView"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="没有找到可用设备"
+        android:textSize="18sp"
+        android:layout_marginBottom="20dp"
+        android:layout_above="@id/btn_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="260dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
+        android:text="取  消"
+        android:textSize="24sp"
+        android:textColor="@color/white"
+        android:background="@drawable/shape_enable_true_8dp"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

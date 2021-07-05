@@ -38,4 +38,19 @@
     <style name="TabLayoutTextStyle">
         <item name="android:textSize">18sp</item>
     </style>
+
+    <style name="dialog_anim_style" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_from_bottom_short</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_to_bottom_short</item>
+    </style>
+
+    <style name="dialog_style" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowIsFloating">true</item>
+        <!--   <item name="android:backgroundDimAmount">0.5</item>-->
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>

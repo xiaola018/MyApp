@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
@@ -22,50 +23,67 @@ import com.yxx.app.util.LogUtil;
 public class BluetoothManager {
 
     private static BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private OnBluetoothListener onBluetoothListener;
 
     public static BluetoothManager get(){
         if(mBluetoothManager == null)mBluetoothManager = new BluetoothManager();
         return mBluetoothManager;
     }
 
-    private BluetoothAdapter mBluetoothAdapter;
-
-/*    public void isBluetoothEnable() {
-        startReceiver();
-        //获取蓝牙适配器
+    public BluetoothManager() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter != null){
+        startReceiver();
+    }
+
+    public void setOnBluetoothListener(OnBluetoothListener onBluetoothListener) {
+        this.onBluetoothListener = onBluetoothListener;
+    }
+
+    public void openBluetooth(){
+        if(mBluetoothAdapter != null){
             // 蓝牙已打开
-            if (mBluetoothAdapter.isEnabled()){
-                LogUtil.d("设备蓝牙已打开");
-                startScanBluetooth();
-            }else{//未打开则开启，此处可以通过弹框提示来提示用户开启
+            if (isOpen()){
+                LogUtil.d("蓝牙已打开");
+            //    startScanBluetooth();
+            }else{
                 LogUtil.d("提示用户打开蓝牙");
                 mBluetoothAdapter.enable();
             }
         }else{
-            //设备不支持蓝牙
+            Toast.makeText(MyApplication.getInstance(),"此设备不支持蓝牙",Toast.LENGTH_LONG).show();
         }
-    }*/
+    }
 
-/*    private void startReceiver(){
+    public boolean isSupport(){
+        return mBluetoothAdapter != null;
+    }
+
+    public boolean isOpen(){
+        return isSupport() && mBluetoothAdapter.isEnabled();
+    }
+
+    private void startReceiver(){
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        registerReceiver(receiver, filter);
+        MyApplication.getInstance().registerReceiver(receiver, filter);
+    }
 
-    }*/
-
-    private void startScanBluetooth() {
+    public void startScanBluetooth() {
         // 判断是否在搜索,如果在搜索，就取消搜索
         if (mBluetoothAdapter.isDiscovering()) {
-            mBluetoothAdapter.cancelDiscovery();
+            cancelDiscovery();
         }
         // 开始搜索
         mBluetoothAdapter.startDiscovery();
         LogUtil.d("正在搜索设备》。。");
+    }
+
+    public void cancelDiscovery(){
+        mBluetoothAdapter.cancelDiscovery();
     }
 
     /**
@@ -82,14 +100,16 @@ public class BluetoothManager {
                 switch (state){
                     case 10:
                         LogUtil.d("蓝牙关闭状态");
+                        onBluetoothListener.closed();
                         break;
                     case 11:
                         LogUtil.d("蓝牙正在打开");
                         break;
                     case 12:
                         LogUtil.d("蓝牙打开");
+                        onBluetoothListener.open();
                         //    startActivity(new Intent(MainActivity.this, SeachBluetoothActivity.class));
-                        startScanBluetooth();
+                       // startScanBluetooth();
                         break;
                     case 13:
                         LogUtil.d("蓝牙正在关闭");
@@ -106,11 +126,22 @@ public class BluetoothManager {
                 int status = device.getBondState();
 
                 LogUtil.d("device name: "+device.getName()+" address: "+device.getAddress());
+                onBluetoothListener.onDevice(device.getName(), device.getAddress());
             }else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
                 LogUtil.d("开始搜索");
+                onBluetoothListener.discoveryStarted();
             }else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
                 LogUtil.d("蓝牙设备搜索完成");
+                onBluetoothListener.discoveryFinished();
             }
         }
     };
+
+    public interface OnBluetoothListener{
+        void open();
+        void closed();
+        void discoveryStarted();
+        void discoveryFinished();
+        void onDevice(String name, String address);
+    }
 }
