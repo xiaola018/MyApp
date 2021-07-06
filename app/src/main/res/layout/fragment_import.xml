@@ -60,7 +60,7 @@
         android:padding="8dp"
         android:textColor="@color/color_333333"
         android:textColorHint="#999999"
-        android:textSize="20sp"
+        android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@id/btn_import"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

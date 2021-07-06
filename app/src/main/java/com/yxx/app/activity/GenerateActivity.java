@@ -1,8 +1,10 @@
 package com.yxx.app.activity;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -25,8 +27,11 @@ import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.TimeUtil;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Author: yangxl
@@ -176,41 +181,70 @@ public class GenerateActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void generateData() {
-
+        ArrayList<String> strList = new ArrayList<>();
         generate_num = Integer.parseInt(editText_generate_num.getText().toString());
         time_float = Integer.parseInt(editText_time_float.getText().toString());
         price_float = Integer.parseInt(editText_price_float.getText().toString());
 
-        try{
+        try {
             String dateStr = tv_start_date.getText().toString();
             SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
             Calendar calendar = Calendar.getInstance();
-        //    calendar.setTime(sdfDate.parse(dateStr));
+            //    calendar.setTime(sdfDate.parse(dateStr));
             Date date = sdfDate.parse(dateStr);
-
+            long dateTime = date.getTime();
             int dateNum = (int) Math.ceil((double) generate_num / num);
             int currentNum = 0;
             LogUtil.d(" dateNum == " + dateNum);
             //总天数
             for (int i = 0; i < dateNum; i++) {
                 int page;
-                if(generate_num <= num){
+                if (generate_num <= num) {
                     page = generate_num;
-                }else{
-                    if(generate_num - currentNum > num){
+                } else {
+                    if (generate_num - currentNum > num) {
                         page = num;
                         currentNum += num;
-                    }else{
+                    } else {
                         page = generate_num - currentNum;
                     }
                 }
                 //每天的张数
                 for (int j = 0; j < page; j++) {
-                    //    LogUtil.d(" === 生成了 ==== " + "第" + (i+1) + "天 : " + "第" + (j+1) + "张");
+                    calendar.setTime(new Date(dateTime));
+                    int year = calendar.get(Calendar.YEAR);
+                    int month = calendar.get(Calendar.MONTH) + 1;
+                    int day = calendar.get(Calendar.DAY_OF_MONTH);
+                    //sdfDate.format(new Date(dateTime));
+                    LogUtil.d(String.format("%s-%s-%s", year, month, day));
+                    LogUtil.d(" === 生成了 ==== " + "第" + (i + 1) + "天 : " + "第" + (j + 1) + "张");
+
+                    SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm");
+                    String timeStr = ((TextView)listLayout.getChildAt(j).findViewById(R.id.tv_list_time)).getText().toString();
+                    Date date2 = sdf2.parse(timeStr);
+                    if(date2 != null){
+                        long beginTime = date2.getTime();
+                        long maxTime = beginTime + price_float * 60 * 1000;
+                        long rtn = beginTime + (long)(Math.random()*(maxTime - beginTime));
+                        calendar.setTime(new Date(rtn));
+
+                        int price = Integer.parseInt(((EditText)listLayout.getChildAt(j).
+                                findViewById(R.id.list_editText_price)).getText().toString());
+                        int maxPrice = price + price_float;
+                        int ranPrice = new Random().nextInt(maxPrice)%(maxPrice-price+1) + price;
+
+                        strList.add(TimeUtil.nyrFormat(year, month, day) + " " + TimeUtil.hmFormat(calendar.get(Calendar.HOUR_OF_DAY),
+                                calendar.get(Calendar.MINUTE)) + " " + ranPrice);
+                    }
 
                 }
+                dateTime = dateTime + 24 * 60 * 60 * 1000;
             }
-        }catch (Exception e){
+            Intent intent = new Intent();
+            intent.putStringArrayListExtra("strList", strList);
+            setResult(Activity.RESULT_OK, intent);
+            finish();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
