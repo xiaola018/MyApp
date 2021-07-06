@@ -1,10 +1,13 @@
 package com.yxx.app.fragment;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +16,9 @@ import androidx.fragment.app.Fragment;
 
 import com.yxx.app.R;
 import com.yxx.app.activity.GenerateActivity;
+import com.yxx.app.util.LogUtil;
+import com.yxx.app.util.MatcherUtil;
+import com.yxx.app.util.TimeUtil;
 
 /**
  * Author: yangxl
@@ -22,6 +28,17 @@ import com.yxx.app.activity.GenerateActivity;
 public class ImportFragment extends Fragment implements View.OnClickListener {
 
     private TextView tv_generate;
+    private EditText editText;
+    private Button btn_import;
+
+    String str =
+            "sdfsdf2020-05-05 14:33 456 sdfsdfsdf\n" +
+            " 妹妹哦  2020年05月05日 13:33\n" +
+            "   2020/05/05 15:33 122\n" +
+            "sdfsdf 2020-05-05 14:33 sdfsdfsdf\n" +
+            "  是 2020年05月05日 888\n" +
+            " 2020/05/05 06:33\n" +
+            "   22:33 666";
 
     @Nullable
     @Override
@@ -35,14 +52,24 @@ public class ImportFragment extends Fragment implements View.OnClickListener {
 
     private void initView(View view){
         tv_generate = view.findViewById(R.id.tv_generate);
+        editText = view.findViewById(R.id.editText);
+        btn_import = view.findViewById(R.id.btn_import);
+
         tv_generate.setOnClickListener(this);
+        btn_import.setOnClickListener(this);
+
+        editText.setText(str);
     }
 
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.tv_generate:
                 startActivityForResult(new Intent(getActivity(), GenerateActivity.class), 1001);
+                break;
+            case R.id.btn_import:
+                TimeUtil.getInfos(null);
                 break;
         }
     }

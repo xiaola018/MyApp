@@ -26,6 +26,7 @@ import android.view.View;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
+import com.yxx.app.dialog.DiscoveryBluetoothDialog;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
@@ -207,6 +208,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onDevice(String name, String address) {
                 discoveryDialog.addDevice(name,address);
+            }
+
+            @Override
+            public void whilePari(BluetoothDevice device) {
+
+            }
+
+            @Override
+            public void pairingSuccess(BluetoothDevice device) {
+
+            }
+
+            @Override
+            public void cancelPari(BluetoothDevice device) {
+
             }
         });
     }

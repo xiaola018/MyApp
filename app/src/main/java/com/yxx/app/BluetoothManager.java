@@ -69,6 +69,7 @@ public class BluetoothManager {
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         MyApplication.getInstance().registerReceiver(receiver, filter);
     }
 
@@ -84,6 +85,19 @@ public class BluetoothManager {
 
     public void cancelDiscovery(){
         mBluetoothAdapter.cancelDiscovery();
+    }
+
+    /**
+     *  蓝牙配对
+     */
+    public void makePair(String address){
+        LogUtil.d("开始配对......");
+        if(isOpen()){
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+            device.createBond();
+        }else{
+            Toast.makeText(MyApplication.getInstance(),"蓝牙未打开",Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -133,6 +147,23 @@ public class BluetoothManager {
             }else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
                 LogUtil.d("蓝牙设备搜索完成");
                 onBluetoothListener.discoveryFinished();
+            }else if(BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)){
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                switch (device.getBondState()) {
+                    case BluetoothDevice.BOND_BONDING:// 正在配对
+                        LogUtil.d("正在配对蓝牙");
+                    //    mMakePariListener.whilePari(device);
+                        break;
+                    case BluetoothDevice.BOND_BONDED:// 配对结束
+                        LogUtil.d("配对成功");
+                    //    mMakePariListener.pairingSuccess(device);
+                        break;
+                    case BluetoothDevice.BOND_NONE:// 取消配对/未配对
+                    //    mMakePariListener.cancelPari(device);
+                        LogUtil.d("配对失败");
+                    default:
+                        break;
+                }
             }
         }
     };
@@ -143,5 +174,8 @@ public class BluetoothManager {
         void discoveryStarted();
         void discoveryFinished();
         void onDevice(String name, String address);
+        void whilePari(BluetoothDevice device);//正在配对
+        void pairingSuccess(BluetoothDevice device);//配对结束
+        void cancelPari(BluetoothDevice device);//取消配对，未配对
     }
 }

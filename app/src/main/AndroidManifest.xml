@@ -26,7 +26,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.DiscoveryBluetoothDialog"
+        <activity android:name=".dialog.DiscoveryBluetoothDialog"
             android:screenOrientation="portrait"/>
         <activity android:name=".activity.GenerateActivity"
             android:screenOrientation="portrait"/>

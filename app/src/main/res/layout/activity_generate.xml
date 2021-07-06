@@ -39,6 +39,7 @@
         <EditText
             android:id="@+id/editText_num"
             android:layout_width="70dp"
+            android:maxLength="1"
             android:layout_height="wrap_content"
             android:background="@color/color_e1e1e1"
             android:gravity="center"
@@ -90,10 +91,11 @@
         <EditText
             android:id="@+id/editText_time_float"
             android:layout_width="70dp"
+            android:maxLength="2"
             android:layout_height="wrap_content"
             android:background="@color/color_e1e1e1"
             android:gravity="center"
-            android:hint="1-5"
+            android:hint="分钟"
             android:inputType="number"
             android:selectAllOnFocus="true"
             android:textColor="@color/color_333333"
@@ -114,7 +116,8 @@
             android:layout_height="30dp"
             android:background="@color/color_e1e1e1"
             android:gravity="center"
-            android:hint="1-100"
+            android:maxLength="2"
+            android:hint="元"
             android:inputType="number"
             android:selectAllOnFocus="true"
             android:textColor="@color/color_333333"
@@ -173,14 +176,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textView5">
 
-
-        <include layout="@layout/list_generate_recyclerview" />
-
-        <include layout="@layout/list_generate_recyclerview" />
-
-        <include layout="@layout/list_generate_recyclerview" />
-
-
     </LinearLayout>
 
 
@@ -189,7 +184,7 @@
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
-        android:background="@drawable/shape_enable_true_8dp"
+        android:background="@drawable/shape_btn_enable"
         android:text="确  定"
         android:textColor="@color/white"
         android:textSize="24sp" />

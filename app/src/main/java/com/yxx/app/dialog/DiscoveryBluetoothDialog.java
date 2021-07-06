@@ -1,4 +1,4 @@
-package com.yxx.app.activity;
+package com.yxx.app.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -156,6 +156,12 @@ public class DiscoveryBluetoothDialog extends Dialog {
 
             public void bind(DeviceInfo deviceInfo){
                 tv_device_name.setText(deviceInfo.deviceName);
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        BluetoothManager.get().makePair(deviceInfo.address);
+                    }
+                });
             }
         }
     }

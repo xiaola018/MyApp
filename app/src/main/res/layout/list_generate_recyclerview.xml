@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingEnd="30dp"
-    android:layout_marginTop="25dp"
+    android:paddingTop="25dp"
     android:orientation="horizontal">
 
     <TextView
@@ -29,8 +29,9 @@
         android:background="@color/color_e1e1e1"
         android:layout_height="wrap_content"/>
     <EditText
-        android:id="@+id/editText_price"
+        android:id="@+id/list_editText_price"
         android:layout_width="0dp"
+        android:maxLength="4"
         android:selectAllOnFocus="true"
         android:inputType="number"
         android:layout_weight="5"
