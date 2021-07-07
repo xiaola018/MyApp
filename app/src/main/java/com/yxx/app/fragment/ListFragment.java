@@ -1,5 +1,8 @@
 package com.yxx.app.fragment;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -8,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,13 +37,17 @@ import java.util.List;
  * Date: 2021/7/3 14:32
  * Description: 列表
  */
-public class ListFragment extends Fragment {
+public class ListFragment extends Fragment implements View.OnClickListener {
 
     private TextView tv_num_and_price;
     private RecyclerView mRecyclerView;
     private Button btn_all_send;
+    private TextView tv_edit;
+    private TextView tv_copy;
 
     private SendDataAdapter mAdapter;
+
+    private int currentStatus;//当前状态， 0（复制，编辑）， 1 （完成，清空）
 
     @Nullable
     @Override
@@ -56,6 +64,11 @@ public class ListFragment extends Fragment {
         tv_num_and_price = view.findViewById(R.id.tv_num_and_price);
         btn_all_send = view.findViewById(R.id.btn_all_send);
         mRecyclerView = view.findViewById(R.id.recyclerView);
+        tv_edit = view.findViewById(R.id.tv_edit);
+        tv_copy = view.findViewById(R.id.tv_copy);
+
+        tv_copy.setOnClickListener(this);
+        tv_edit.setOnClickListener(this);
     }
 
     private void initAdapter() {
@@ -70,7 +83,10 @@ public class ListFragment extends Fragment {
             }
         }
         if (infoList == null) {
+            showEditTextView(false);
             infoList = new ArrayList<>();
+        }else{
+            showEditTextView(true);
         }
         mAdapter = new SendDataAdapter(infoList);
         mRecyclerView.setAdapter(mAdapter);
@@ -79,8 +95,10 @@ public class ListFragment extends Fragment {
 
     public void addData(List<SendInfo> data, boolean isClear) {
         if (isClear) {
-            mAdapter.clear();
-            SPUtil.putString(SPUtil.CACHE_DATA_LIST,"");
+            clearCache();
+        }
+        if(data != null && data.size() > 0 && tv_edit.getVisibility() == View.INVISIBLE){
+            showEditTextView(true);
         }
         mAdapter.add(data);
         //保存数据
@@ -102,6 +120,80 @@ public class ListFragment extends Fragment {
             allPrice += Integer.parseInt(info.price);
         }
         return String.format("%s 张    %s 元", mAdapter.getItemCount(), allPrice);
+    }
+
+
+    private void setCurrentStatus(){
+        if(currentStatus == 0){
+            currentStatus = 1;
+            tv_copy.setText("完 成");
+            tv_edit.setText("清 空");
+        }else{
+            currentStatus = 0;
+            tv_copy.setText("复 制");
+            tv_edit.setText("编 辑");
+        }
+    }
+
+    private void copyData(){
+        try{
+            StringBuffer buffer = new StringBuffer();
+            for(SendInfo info : mAdapter.getData()){
+                buffer.append(String.format("%s-%s-%s %s:%s %s",info.year,info.month,info.day,
+                        info.hours,info.minute,info.price));
+                buffer.append("\n");
+            }
+
+            ClipboardManager cm = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData mClipData = ClipData.newPlainText("Label", buffer.toString());
+            cm.setPrimaryClip(mClipData);
+            Toast.makeText(getActivity(), "复制成功", Toast.LENGTH_SHORT).show();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.tv_copy:
+                if(currentStatus == 0){
+                    //复制
+                    copyData();
+                }else{
+                    //完成
+                    setCurrentStatus();
+                    mAdapter.notifyDataSetChanged();
+                }
+
+                break;
+            case R.id.tv_edit:
+                if(currentStatus == 1){
+                    showEditTextView(false);
+                    clearCache();
+                    setNumPrice();
+                }
+                setCurrentStatus();
+                mAdapter.notifyDataSetChanged();
+                break;
+        }
+    }
+
+    //清空列表缓存数据
+    private void clearCache(){
+        mAdapter.clear();
+        SPUtil.putString(SPUtil.CACHE_DATA_LIST,"");
+    }
+
+    private void showEditTextView(boolean show){
+        if(show){
+            tv_copy.setVisibility(View.VISIBLE);
+            tv_edit.setVisibility(View.VISIBLE);
+        }else{
+            tv_copy.setVisibility(View.INVISIBLE);
+            tv_edit.setVisibility(View.INVISIBLE);
+        }
     }
 
     public class SendDataAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -170,6 +262,14 @@ public class ListFragment extends Fragment {
                 tv_nyr.setText(TimeUtil.nyrFormat(sendInfo.year, sendInfo.month, sendInfo.day));
                 tv_time.setText(TimeUtil.hmFormat(sendInfo.hours, sendInfo.minute));
                 tv_price.setText(sendInfo.price);
+
+                if(currentStatus == 0){
+                    iv_send.setVisibility(View.VISIBLE);
+                    iv_remove.setVisibility(View.GONE);
+                }else{
+                    iv_send.setVisibility(View.GONE);
+                    iv_remove.setVisibility(View.VISIBLE);
+                }
             }
         }
     }

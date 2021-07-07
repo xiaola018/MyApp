@@ -22,6 +22,7 @@ import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
@@ -287,6 +288,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void importDataToList(List<SendInfo> data, boolean isClear){
         if(listFragment != null){
             listFragment.addData(data,isClear);
+            setCurrentPager(2);
+            Toast.makeText(this, "导入成功", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void setCurrentPager(int index){
+        mViewPager.setCurrentItem(index);
     }
 }

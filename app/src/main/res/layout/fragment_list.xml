@@ -11,25 +11,25 @@
     <!-- 清空，生成，导入，粘贴输入 -->
 
     <TextView
-        android:id="@+id/tv_clear"
+        android:id="@+id/tv_copy"
         android:layout_width="50dp"
         android:layout_height="30dp"
         android:layout_marginStart="15dp"
         android:background="@drawable/shape_stroke_1dp_radius_5dp"
         android:gravity="center"
-        android:text="清 空"
+        android:text="复 制"
         android:textColor="@color/teal_200"
         android:textSize="16dp"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/tv_generate"
+        android:id="@+id/tv_edit"
         android:layout_width="50dp"
         android:layout_height="30dp"
         android:layout_marginEnd="15dp"
         android:background="@drawable/shape_stroke_1dp_radius_5dp"
         android:gravity="center"
-        android:text="生 成"
+        android:text="编 辑"
         android:textColor="@color/teal_200"
         android:textSize="16dp"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -70,6 +70,6 @@
         app:layout_constraintBottom_toTopOf="@id/btn_all_send"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_clear" />
+        app:layout_constraintTop_toBottomOf="@id/tv_copy" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
