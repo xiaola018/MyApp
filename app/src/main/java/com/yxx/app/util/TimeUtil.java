@@ -63,9 +63,29 @@ public class TimeUtil {
         return year + "-" + m + "-" + d;
     }
 
+    public static String nyrFormat(String y, String m, String d) {
+        if (m.length() == 1) {
+            m = "0" + m;
+        }
+        if (d.length() == 1) {
+            d = "0" + d;
+        }
+        return y + "-" + m + "-" + d;
+    }
+
     public static String hmFormat(int hourOfDay, int minute) {
         String h = String.valueOf(hourOfDay);
         String m = String.valueOf(minute);
+        if (h.length() == 1) {
+            h = "0" + h;
+        }
+        if (m.length() == 1) {
+            m = "0" + m;
+        }
+        return h + ":" + m;
+    }
+
+    public static String hmFormat(String h, String m) {
         if (h.length() == 1) {
             h = "0" + h;
         }
@@ -87,14 +107,6 @@ public class TimeUtil {
         SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy年MM月dd日 HH:mm");
         SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy/MM/dd HH:mm");
-        stringList = new ArrayList<>();
-        stringList.add("2018年05月05日 13:44            666");
-        stringList.add("2019-05-06 20:44       444");
-        stringList.add("2020/05/06 10:44 132");
-        stringList.add("2015年05月05日 555");
-        stringList.add("2016-05-06 11");
-        stringList.add("2017/05/01 44");
-        stringList.add("23:33 44");
         List<SendInfo> infoList = new ArrayList<>();
         for (String str : stringList) {
             try {

@@ -38,10 +38,6 @@ public class MatcherUtil {
                 }
             }
         }
-
-        for (String ss : stringList) {
-            LogUtil.d("  == ss == " + ss);
-        }
         return stringList;
     }
 

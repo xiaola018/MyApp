@@ -26,11 +26,13 @@ import android.view.View;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
+import com.yxx.app.bean.SendInfo;
 import com.yxx.app.dialog.DiscoveryBluetoothDialog;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
 import com.yxx.app.fragment.ListFragment;
+import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
@@ -78,8 +80,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initView() {
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         setSupportActionBar(toolbar);
-
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -95,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         fragmentList.add(importFragment = new ImportFragment());
         fragmentList.add(listFragment = new ListFragment());
 
+        mViewPager.setOffscreenPageLimit(fragmentList.size());
         mViewPager.setAdapter(new BaseFragmentStateAdapter(getSupportFragmentManager(),
                 getLifecycle(), fragmentList));
 
@@ -280,4 +283,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+
+    public void importDataToList(List<SendInfo> data, boolean isClear){
+        if(listFragment != null){
+            listFragment.addData(data,isClear);
+        }
+    }
 }

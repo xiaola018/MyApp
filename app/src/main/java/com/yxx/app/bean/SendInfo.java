@@ -12,4 +12,6 @@ public class SendInfo {
     public String hours;
     public String minute;
     public String price;
+
+    public int type;
 }
