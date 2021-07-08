@@ -2,15 +2,14 @@ package com.yxx.app.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.ArraySet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -21,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
-import com.yxx.app.bean.DeviceInfo;
+import com.yxx.app.bean.DeviceModel;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -80,7 +79,15 @@ public class DiscoveryBluetoothDialog extends Dialog {
         btn_cancel = findViewById(R.id.btn_cancel);
         tv_no_data = findViewById(R.id.tv_no_data);
 
-        btn_cancel.setOnClickListener(view -> BluetoothManager.get().cancelDiscovery());
+        btn_cancel.setOnClickListener(view -> dismiss());
+
+        setOnDismissListener(new OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+            //    BluetoothManager.get().cancelDiscovery();
+                BluetoothManager.get().sendThread(null);
+            }
+        });
     }
 
     public void startDiscovery(){
@@ -101,12 +108,10 @@ public class DiscoveryBluetoothDialog extends Dialog {
         }
     }
 
-    public void addDevice(String name, String address){
-        if(mAdapter != null && !TextUtils.isEmpty(name) && !TextUtils.isEmpty(address) && nameSet.add(name)){
-            DeviceInfo deviceInfo = new DeviceInfo();
-            deviceInfo.deviceName = name;
-            deviceInfo.address = address;
-            mAdapter.getData().add(deviceInfo);
+    public void addDevice(DeviceModel deviceModel){
+        if(mAdapter != null && !TextUtils.isEmpty(deviceModel.deviceName)
+                && !TextUtils.isEmpty(deviceModel.address) && nameSet.add(deviceModel.deviceName)){
+            mAdapter.getData().add(deviceModel);
             mAdapter.notifyItemRangeChanged(mAdapter.getItemCount(), mAdapter.getData().size());
         }
     }
@@ -119,13 +124,13 @@ public class DiscoveryBluetoothDialog extends Dialog {
 
     public class DeviceListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
-        private List<DeviceInfo> data;
+        private List<DeviceModel> data;
 
-        public DeviceListAdapter(List<DeviceInfo> data) {
+        public DeviceListAdapter(List<DeviceModel> data) {
             this.data = data;
         }
 
-        public List<DeviceInfo> getData() {
+        public List<DeviceModel> getData() {
             return data;
         }
 
@@ -148,18 +153,22 @@ public class DiscoveryBluetoothDialog extends Dialog {
         public class ViewHolder extends RecyclerView.ViewHolder{
 
             TextView tv_device_name;
+            TextView tv_device_addr;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tv_device_name = itemView.findViewById(R.id.tv_device_name);
+                tv_device_addr = itemView.findViewById(R.id.tv_device_addr);
             }
 
-            public void bind(DeviceInfo deviceInfo){
+            public void bind(DeviceModel deviceInfo){
                 tv_device_name.setText(deviceInfo.deviceName);
+                tv_device_addr.setText(deviceInfo.address);
                 itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        BluetoothManager.get().makePair(deviceInfo.address);
+                    //    BluetoothManager.get().makePair(deviceInfo.address);
+                        BluetoothManager.get().connectGatt(getContext(), deviceInfo, null);
                     }
                 });
             }

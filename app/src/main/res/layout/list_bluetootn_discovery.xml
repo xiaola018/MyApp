@@ -12,12 +12,32 @@
         android:layout_height="wrap_content"
         android:src="@mipmap/ic_device"/>
 
-    <TextView
-        android:id="@+id/tv_device_name"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:textColor="@color/color_333333"
-        android:textSize="18sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_device_name"
+            android:textColor="@color/color_333333"
+            android:textSize="18sp"
+            android:text="sdfsfsdf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/tv_device_addr"
+            android:textColor="@color/color_6f6765"
+            android:textSize="14sp"
+            android:layout_marginTop="5dp"
+            android:text="sdfsfsdf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
 
 </LinearLayout>

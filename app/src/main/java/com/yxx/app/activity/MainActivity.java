@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
+import com.yxx.app.bean.DeviceModel;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.dialog.DiscoveryBluetoothDialog;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initView() {
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         setSupportActionBar(toolbar);
+
     }
 
 
@@ -125,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void checkPermis() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             RxPermissions rxPermissions = new RxPermissions(this);
-            rxPermissions.request(Manifest.permission.ACCESS_COARSE_LOCATION)
+            rxPermissions.request(Manifest.permission.ACCESS_FINE_LOCATION)
                     .subscribe(new Observer<Boolean>() {
                         @Override
                         public void onSubscribe(Disposable d) {
@@ -134,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         @Override
                         public void onNext(Boolean aBoolean) {
                             if(aBoolean){
-                                open();
+                                openBluetooth();
                             }else{
                                 AlertDialog.Builder alertdialogbuilder = new AlertDialog.Builder(MainActivity.this);
                                 alertdialogbuilder.setMessage("缺少必要权限,请在\"设置\"-\"权限\"中打开所需权限");
@@ -166,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        open();
+        openBluetooth();
     }
 
     @Override
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
-    private void open(){
+    private void openBluetooth(){
         if(!BluetoothManager.get().isOpen()){
             LogUtil.d("打开蓝牙");
             BluetoothManager.get().openBluetooth();
@@ -191,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         BluetoothManager.get().setOnBluetoothListener(new BluetoothManager.OnBluetoothListener() {
             @Override
             public void open() {
-
+                openBluetooth();
             }
 
             @Override
@@ -210,9 +212,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
-            public void onDevice(String name, String address) {
-                discoveryDialog.addDevice(name,address);
+            public void onDeviceAdd(DeviceModel deviceModel) {
+                discoveryDialog.addDevice(deviceModel);
             }
+
 
             @Override
             public void whilePari(BluetoothDevice device) {
