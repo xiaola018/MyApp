@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.gson.Gson;
 import com.yxx.app.R;
 import com.yxx.app.bean.SendInfo;
+import com.yxx.app.util.Hex;
 import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
@@ -69,6 +70,7 @@ public class ListFragment extends Fragment implements View.OnClickListener {
 
         tv_copy.setOnClickListener(this);
         tv_edit.setOnClickListener(this);
+        btn_all_send.setOnClickListener(this);
     }
 
     private void initAdapter() {
@@ -177,6 +179,9 @@ public class ListFragment extends Fragment implements View.OnClickListener {
                 setCurrentStatus();
                 mAdapter.notifyDataSetChanged();
                 break;
+            case R.id.btn_all_send:
+                Hex.listToHexStr(mAdapter.getData());
+                break;
         }
     }
 
@@ -188,9 +193,11 @@ public class ListFragment extends Fragment implements View.OnClickListener {
 
     private void showEditTextView(boolean show){
         if(show){
+            btn_all_send.setEnabled(true);
             tv_copy.setVisibility(View.VISIBLE);
             tv_edit.setVisibility(View.VISIBLE);
         }else{
+            btn_all_send.setEnabled(false);
             tv_copy.setVisibility(View.INVISIBLE);
             tv_edit.setVisibility(View.INVISIBLE);
         }

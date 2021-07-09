@@ -29,6 +29,24 @@ public class SPUtil {
         return sp.getString(key, "");
     }
 
+    public static int getInt(String key){
+        return sp.getInt(CACHE_IS_NOW_PRINT, 0);
+    }
+
+    public static void setInt(String key, int value){
+        eEditor.putInt(key, value);
+    }
+
 
     public static final String CACHE_DATA_LIST = "cache_data_list";
+    public static final String CACHE_IS_NOW_PRINT = "cache_is_now_print";
+
+    /**
+     *  是否立即打印
+     */
+    public static int isNowPrint(){
+        return getInt(CACHE_IS_NOW_PRINT);
+    }
+
+//    public static void
 }

@@ -21,7 +21,9 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import com.google.common.primitives.Bytes;
 import com.yxx.app.bean.DeviceModel;
+import com.yxx.app.bean.SendInfo;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 
@@ -37,6 +39,13 @@ import java.util.concurrent.Executors;
  * Description:
  */
 public class BluetoothManager {
+
+    //数据包特征首字符
+    private final static int FEATURES_START_CHAR = 160;
+    //数据包特征尾字符
+    private final static int FEATURES_END_CHAR = 10;
+    //命令类型
+    private final static int CMD_TYPE = 26;
 
     //蓝牙的特征值，发送
     private final static String SERVICE_EIGENVALUE_SEND = "0000ffe1-0000-1000-8000-00805f9b34fb";
@@ -380,6 +389,39 @@ public class BluetoothManager {
         lens[0]=len/20;
         lens[1]=len%20;
         return lens;
+    }
+
+    /**
+     *  发送数据， 外部调用
+     * @param infoList  操作页面下封装好的数据
+     */
+    public void sendData(List<SendInfo> infoList){
+        //把需要打印的数据转成hex
+        List<String> hexList = Hex.listToHexStr(infoList);
+
+        //byte[] bytes=Bytes.toArray(list);
+
+        //字节组装数据
+        List<Byte> byteList = new ArrayList<>();
+
+
+        //把hex转成字节后放到list中
+        for(String hexStr : hexList){
+            byte[] hexBytes = Hex.hexToByteArray(hexStr);
+            byteList.addAll(Bytes.asList(hexBytes));
+        }
+
+        //添加特征首字符
+        byte[] startCharByte = Hex.hexToByteArray(Hex.decToHex(FEATURES_START_CHAR));
+        byteList.addAll(0,Bytes.asList(startCharByte));
+        byteList.addAll(0,Bytes.asList(startCharByte));
+
+        //添加特征尾字符
+        byte[] endCharByte = Hex.hexToByteArray(Hex.decToHex(FEATURES_END_CHAR));
+        byteList.addAll(Bytes.asList(endCharByte));
+        byteList.addAll(Bytes.asList(endCharByte));
+
+        byte[] sendByteArray = Bytes.toArray(byteList);
     }
 
     public interface OnBluetoothListener{
