@@ -78,8 +78,10 @@ public class Hex {
             hexList.add(decToHex(Integer.parseInt(info.year)));
             hexList.add(decToHex(Integer.parseInt(info.month)));
             hexList.add(decToHex(Integer.parseInt(info.day)));
-            hexList.add(decToHex(Integer.parseInt(info.hours)));
-            hexList.add(decToHex(Integer.parseInt(info.minute)));
+            hexList.add(decToHex(Integer.parseInt(info.u_hours)));
+            hexList.add(decToHex(Integer.parseInt(info.u_minute)));
+            hexList.add(decToHex(Integer.parseInt(info.d_hours)));
+            hexList.add(decToHex(Integer.parseInt(info.d_minute)));
             hexList.add(decToHex(Integer.parseInt(info.price)));
         }
         LogUtil.d("== list hex str = " + hexList.toString());

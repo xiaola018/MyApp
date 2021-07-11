@@ -141,8 +141,9 @@ public class ListFragment extends Fragment implements View.OnClickListener {
         try{
             StringBuffer buffer = new StringBuffer();
             for(SendInfo info : mAdapter.getData()){
-                buffer.append(String.format("%s-%s-%s %s:%s %s",info.year,info.month,info.day,
-                        info.hours,info.minute,info.price));
+                buffer.append(String.format("%s-%s-%s %s:%s%s %s",info.year,info.month,info.day,
+                        info.u_hours,info.u_minute, info.hasDownTime() ?
+                                "-" + TimeUtil.hmFormat(info.d_hours, info.d_minute) : "",info.price));
                 buffer.append("\n");
             }
 
@@ -267,7 +268,8 @@ public class ListFragment extends Fragment implements View.OnClickListener {
 
             public void bind(SendInfo sendInfo) {
                 tv_nyr.setText(TimeUtil.nyrFormat(sendInfo.year, sendInfo.month, sendInfo.day));
-                tv_time.setText(TimeUtil.hmFormat(sendInfo.hours, sendInfo.minute));
+                tv_time.setText(String.format("%s%s",TimeUtil.hmFormat(sendInfo.u_hours, sendInfo.u_minute),
+                        sendInfo.hasDownTime() ? "-" + TimeUtil.hmFormat(sendInfo.d_hours, sendInfo.d_minute) : ""));
                 tv_price.setText(sendInfo.price);
 
                 if(currentStatus == 0){

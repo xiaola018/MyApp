@@ -67,6 +67,8 @@ public class BluetoothManager {
 
     private ExecutorService mThreadService;
 
+    private boolean isConnect;
+
     public static BluetoothManager get(){
         if(mBluetoothManager == null)mBluetoothManager = new BluetoothManager();
         return mBluetoothManager;
@@ -74,6 +76,8 @@ public class BluetoothManager {
 
     public BluetoothManager() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mThreadService = Executors.newFixedThreadPool(1);
+
         startReceiver();
     }
 
@@ -213,18 +217,34 @@ public class BluetoothManager {
         }
     };
 
-    public void connectGatt(Context context, DeviceModel deviceModel, BluetoothGattCallback callback){
+    public void connectGatt(Context context, DeviceModel deviceModel){
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                connectGattThread(context, deviceModel);
+            }
+        };
+        mThreadService.execute(runnable);
+    }
+
+    private void connectGattThread(Context context, DeviceModel deviceModel){
         this.deviceModel = deviceModel;
         mBluetoothGatt = deviceModel.mDevice.connectGatt(context, true, new BluetoothGattCallback() {
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 LogUtil.d(" connect == "  + newState);
+                if(newState == 133){
+                    LogUtil.d("出现133问题，需要扫描重连");
+                    isConnect = false;
+                    onBluetoothListener.onConnectError();
+                }
                 switch (newState) {
-                    case BluetoothGatt.GATT_SUCCESS:
-                        //连接成功
-                        break;
                     case BluetoothProfile.STATE_CONNECTED:
                         LogUtil.d("connect = STATE_CONNECTED");
+                        if (mBluetoothGatt ==null){
+                            isConnect = false;
+                            onBluetoothListener.onConnectError();
+                        }
                         //发现蓝牙服务
                         mTimeHandler.postDelayed(new Runnable() {
                             @Override
@@ -232,24 +252,11 @@ public class BluetoothManager {
                                 mBluetoothGatt.discoverServices();//扫描服务
                             }
                         },1000);//坑：设置延迟时间过短，很可能发现不了服务
-/*                        final int[] i = {0};
-                        new Thread(){
-                            @Override
-                            public void run() {
-                                super.run();
-                                LogUtil.d("开始扫描服务");
-                                while (i[0] < 5){
-                                    LogUtil.d("扫描服务");
-                                    mBluetoothGatt.discoverServices();//扫描服务
-                                    try {
-                                        Thread.sleep(500);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                    i[0]++;
-                                }
-                            }
-                        }.start();*/
+                        break;
+                    case BluetoothGatt.STATE_DISCONNECTED:
+                        LogUtil.d("蓝牙断开连接");
+                        isConnect = false;
+                        onBluetoothListener.onStateDisconnected();
                         break;
                 }
                 super.onConnectionStateChange(gatt, status, newState);
@@ -275,6 +282,8 @@ public class BluetoothManager {
                     //mBluetoothGatt.writeDescriptor(descriptor);
                     //来到这里，才算真正的建立连接
                     LogUtil.d("设置监听成功,可以发送数据了...");
+                    isConnect = true;
+                    onBluetoothListener.onConnectSuccess();
 /*                    mDeiceModule.setUUID(null,descriptor.getUuid().toString(),null);
                     log("服务中连接成功，给与的返回名称是->"+gatt.getDevice().getName());
                     log("服务中连接成功，给与的返回地址是->"+gatt.getDevice().getAddress());
@@ -346,9 +355,7 @@ public class BluetoothManager {
 
         buff = new byte[]{-27,7,Hex.hexToByte(hex2),Hex.hexToByte(hex3)};
 
-        if (mThreadService == null){
-            mThreadService = Executors.newFixedThreadPool(1);
-        }
+
 
         LogUtil.d("进入发送方法");
         byte[] finalBuff = buff;
@@ -391,11 +398,22 @@ public class BluetoothManager {
         return lens;
     }
 
+    public void sendData(SendInfo sendInfo){
+        List<SendInfo> list = new ArrayList<>();
+        list.add(sendInfo);
+        sendData(list);
+    }
+
     /**
      *  发送数据， 外部调用
      * @param infoList  操作页面下封装好的数据
      */
     public void sendData(List<SendInfo> infoList){
+        if(!isConnect || !isOpen()){
+            Toast.makeText(MyApplication.getInstance(), "蓝牙未连接",Toast.LENGTH_LONG).show();
+            return;
+        }
+
         //把需要打印的数据转成hex
         List<String> hexList = Hex.listToHexStr(infoList);
 
@@ -433,5 +451,8 @@ public class BluetoothManager {
         void whilePari(BluetoothDevice device);//正在配对
         void pairingSuccess(BluetoothDevice device);//配对结束
         void cancelPari(BluetoothDevice device);//取消配对，未配对
+        void onConnectSuccess();
+        void onConnectError();
+        void onStateDisconnected();
     }
 }

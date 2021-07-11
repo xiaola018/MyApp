@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -18,6 +19,8 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,6 +39,7 @@ import com.yxx.app.fragment.InputFragment;
 import com.yxx.app.fragment.ListFragment;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
+import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
@@ -45,13 +49,18 @@ import java.util.List;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener , Toolbar.OnMenuItemClickListener {
+public class MainActivity extends AppCompatActivity implements
+        View.OnClickListener ,
+        Toolbar.OnMenuItemClickListener,
+        DiscoveryBluetoothDialog.DiscoveryBluetoothCallback{
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1001;
 
     private Toolbar toolbar;
     private ViewPager2 mViewPager;
     private TabLayout mTabLayout;
+
+    private MenuConnectView menuConnectView;
 
 
     private InputFragment inputFragment;
@@ -81,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initView() {
         discoveryDialog = new DiscoveryBluetoothDialog(this);
+        discoveryDialog.setBluetoothCallback(this);
         setSupportActionBar(toolbar);
 
     }
@@ -90,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onCreateOptionsMenu(Menu menu) {
         toolbar.inflateMenu(R.menu.menu_home);
         toolbar.setOnMenuItemClickListener(this);
+        MenuItem menuItem = toolbar.getMenu().findItem(R.id.menu_connect);
+        menuConnectView = (MenuConnectView) menuItem.getActionView();
+        menuConnectView.setOnClickListener(v -> checkPermis());
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -122,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
+
     }
 
     private void checkPermis() {
@@ -193,27 +207,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         BluetoothManager.get().setOnBluetoothListener(new BluetoothManager.OnBluetoothListener() {
             @Override
             public void open() {
+                LogUtil.d("open");
                 openBluetooth();
             }
 
             @Override
             public void closed() {
-
+                LogUtil.d("closed");
             }
 
             @Override
             public void discoveryStarted() {
-
+                LogUtil.d("discoveryStarted");
             }
 
             @Override
             public void discoveryFinished() {
-                discoveryDialog.discoveryFinished();
+                LogUtil.d("discoveryFinished");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        discoveryDialog.discoveryFinished();
+                    }
+                });
+
             }
 
             @Override
             public void onDeviceAdd(DeviceModel deviceModel) {
-                discoveryDialog.addDevice(deviceModel);
+                LogUtil.d("onDeviceAdd");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        discoveryDialog.addDevice(deviceModel);
+                    }
+                });
+
             }
 
 
@@ -231,62 +260,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void cancelPari(BluetoothDevice device) {
 
             }
+
+            @Override
+            public void onConnectSuccess() {
+                LogUtil.d("onConnectSuccess");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        toolbar.setTitle("已连接");
+                        menuConnectView.showProgressBar(false);
+                        inputFragment.sendBtnEnable(true);
+                    }
+                });
+            }
+
+            @Override
+            public void onConnectError() {
+                LogUtil.d("onConnectError");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        toolbar.setTitle("未连接");
+                        menuConnectView.showProgressBar(false);
+                        inputFragment.sendBtnEnable(false);
+                    }
+                });
+            }
+
+            @Override
+            public void onStateDisconnected() {
+                LogUtil.d("onStateDisconnected");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        toolbar.setTitle("已断开");
+                        menuConnectView.showProgressBar(false);
+                        inputFragment.sendBtnEnable(false);
+                    }
+                });
+            }
         });
     }
 
-
-    private void startReceiver() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothDevice.ACTION_FOUND);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        registerReceiver(receiver, filter);
+    @Override
+    public void cancelDiscovery() {
 
     }
 
-    final private BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            LogUtil.d("有回调=== action -=== " + action);
-            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                LogUtil.d("state = " + state);
-                switch (state) {
-                    case 10:
-                        LogUtil.d("蓝牙关闭状态");
-                        break;
-                    case 11:
-                        LogUtil.d("蓝牙正在打开");
-                        break;
-                    case 12:
-                        LogUtil.d("蓝牙打开");
-                        //    startActivity(new Intent(MainActivity.this, SeachBluetoothActivity.class));
-                        //    startScanBluetooth();
-                        break;
-                    case 13:
-                        LogUtil.d("蓝牙正在关闭");
-                        break;
-                }
-            } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+    @Override
+    public void connectDevice(DeviceModel deviceModel){
+        menuConnectView.showProgressBar(true);
+        BluetoothManager.get().connectGatt(this, deviceModel);
+    }
 
-                //蓝牙rssi参数，代表蓝牙强度
-                short rssi = intent.getExtras().getShort(BluetoothDevice.EXTRA_RSSI);
-                //蓝牙设备名称
-                String name = device.getName();
-                //蓝牙设备连接状态
-                int status = device.getBondState();
-
-                LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                LogUtil.d("开始搜索");
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                LogUtil.d("蓝牙设备搜索完成");
-            }
+    public void importData(SendInfo sendInfo){
+        if(listFragment != null){
+            List<SendInfo> data = new ArrayList<>();
+            data.add(sendInfo);
+            importDataToList(data, false);
         }
-    };
+    }
 
     public void importDataToList(List<SendInfo> data, boolean isClear){
         if(listFragment != null){
@@ -299,4 +332,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void setCurrentPager(int index){
         mViewPager.setCurrentItem(index);
     }
+
+
 }

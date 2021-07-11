@@ -142,8 +142,8 @@ public class TimeUtil {
                     sendInfo.year = String.valueOf(c.get(Calendar.YEAR));
                     sendInfo.month = lengthFormat(c.get(Calendar.MONTH) + 1);
                     sendInfo.day = lengthFormat(c.get(Calendar.DAY_OF_MONTH));
-                    sendInfo.hours = lengthFormat(c.get(Calendar.HOUR_OF_DAY));
-                    sendInfo.minute = lengthFormat(c.get(Calendar.MINUTE));
+                    sendInfo.u_hours = lengthFormat(c.get(Calendar.HOUR_OF_DAY));
+                    sendInfo.u_minute = lengthFormat(c.get(Calendar.MINUTE));
                 }
 
                 sendInfo.price = pstr;

@@ -43,6 +43,12 @@ public class DiscoveryBluetoothDialog extends Dialog {
 
     private Set<String> nameSet = new HashSet<>();
 
+    private DiscoveryBluetoothCallback bluetoothCallback;
+
+    public void setBluetoothCallback(DiscoveryBluetoothCallback bluetoothCallback) {
+        this.bluetoothCallback = bluetoothCallback;
+    }
+
     public DiscoveryBluetoothDialog(@NonNull Context context) {
         super(context, R.style.dialog_style);
     }
@@ -84,8 +90,7 @@ public class DiscoveryBluetoothDialog extends Dialog {
         setOnDismissListener(new OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-            //    BluetoothManager.get().cancelDiscovery();
-                BluetoothManager.get().sendThread(null);
+                BluetoothManager.get().cancelDiscovery();
             }
         });
     }
@@ -168,10 +173,17 @@ public class DiscoveryBluetoothDialog extends Dialog {
                     @Override
                     public void onClick(View view) {
                     //    BluetoothManager.get().makePair(deviceInfo.address);
-                        BluetoothManager.get().connectGatt(getContext(), deviceInfo, null);
+                    //    BluetoothManager.get().connectGatt(getContext(), deviceInfo, null);
+                        dismiss();
+                        bluetoothCallback.connectDevice(deviceInfo);
                     }
                 });
             }
         }
+    }
+
+    public interface DiscoveryBluetoothCallback{
+        void cancelDiscovery();
+        void connectDevice(DeviceModel deviceModel);
     }
 }
