@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.common.primitives.Bytes;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
@@ -99,7 +100,14 @@ public class MainActivity extends AppCompatActivity implements
         LogUtil.d(" num == " + Integer.parseInt("E057", 16));
         LogUtil.d(" num == " + Integer.toHexString(Integer.parseInt("E057", 16)));*/
 
-        startActivity(new Intent(this, ReplaceCityActivity.class));
+    //    startActivity(new Intent(this, ReplaceCityActivity.class));
+
+        String numHex = Hex.decToHex(1);
+        LogUtil.d("== numHex== " + numHex);
+        byte[] numBytes = Hex.hexToByteArray(numHex);
+    ///    for(byte b : numBytes){
+            LogUtil.d( " == bbb=== " + Hex.bytesToHex(numBytes));
+   //     }
     }
 
     private void initView() {

@@ -1,5 +1,6 @@
 package com.yxx.app.util;
 
+import com.google.common.primitives.Bytes;
 import com.yxx.app.bean.SendInfo;
 
 import java.util.ArrayList;
@@ -72,23 +73,51 @@ public class Hex {
         return sb.toString();
     }
 
-    public static List<String> listToHexStr(List<SendInfo> infoList) {
-        List<String> hexList = new ArrayList<>();
-        for (SendInfo info : infoList) {
+    public static List<Byte> listToHexStr(List<SendInfo> infoList) {
+        List<Byte> byteList = new ArrayList<>();
+        for (int i = 0; i < infoList.size(); i++) {
+            SendInfo info = infoList.get(i);
             info.autoDownTime();
-            hexList.add(decToHex(Integer.parseInt(info.year)));
-            hexList.add(decToHex(Integer.parseInt(info.month)));
-            hexList.add(decToHex(Integer.parseInt(info.day)));
-            hexList.add(decToHex(Integer.parseInt(info.u_hours)));
-            hexList.add(decToHex(Integer.parseInt(info.u_minute)));
-            hexList.add(decToHex(Integer.parseInt(info.d_hours)));
-            hexList.add(decToHex(Integer.parseInt(info.d_minute)));
-            hexList.add(decToHex(Integer.parseInt(info.price)));
+            byte[] yearBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.year)));
+            byte[] monthBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.month)));
+            byte[] dayBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.day)));
+            byte[] u_hoursBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.u_hours)));
+            byte[] u_minuteBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.u_minute)));
+            byte[] d_hoursBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.d_hours)));
+            byte[] d_minuteBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.d_minute)));
+            byte[] priceBytes = Hex.hexToByteArray(decToHex(Integer.parseInt(info.price)));
+
+            byteList.addAll(Bytes.asList(yearBytes));
+            byteList.addAll(Bytes.asList(monthBytes));
+            byteList.addAll(Bytes.asList(dayBytes));
+            if(u_hoursBytes.length == 0){
+                byteList.add((byte) 0x00);
+            }else{
+                byteList.addAll(Bytes.asList(u_hoursBytes));
+            }
+            if(u_minuteBytes.length == 0){
+                byteList.add((byte) 0x00);
+            }else{
+                byteList.addAll(Bytes.asList(u_minuteBytes));
+            }
+            if(d_hoursBytes.length == 0){
+                byteList.add((byte) 0x00);
+            }else{
+                byteList.addAll(Bytes.asList(d_hoursBytes));
+            }
+            if(d_minuteBytes.length == 0){
+                byteList.add((byte) 0x00);
+            }else{
+                byteList.addAll(Bytes.asList(d_minuteBytes));
+            }
+            byteList.addAll(Bytes.asList(priceBytes));
+
+            if(priceBytes.length == 1){
+                byteList.add((byte) 0x00);
+            }
+
         }
-        LogUtil.d("== list hex str = " + hexList.toString());
-
-        BitSet bitSet = new BitSet();
-
-        return hexList;
+        LogUtil.d("==== byteList === " + byteList.size());
+        return byteList;
     }
 }
