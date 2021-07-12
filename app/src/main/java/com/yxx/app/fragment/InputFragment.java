@@ -173,10 +173,9 @@ public class InputFragment extends Fragment implements View.OnClickListener {
                     String[] downTimeArray = tv_down_time_input.getText().toString().split(":");
                     sendInfo.d_hours = downTimeArray[0];
                     sendInfo.d_minute = downTimeArray[1];
+                }else{
+                    sendInfo.autoDownTime();
                 }
-
-                sendInfo.autoDownTime();
-
                 sendInfo.price = editText.getText().toString();
 
                 MainActivity activity = (MainActivity) getActivity();

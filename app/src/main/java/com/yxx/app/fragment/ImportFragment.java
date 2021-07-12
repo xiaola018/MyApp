@@ -59,7 +59,6 @@ public class ImportFragment extends Fragment implements View.OnClickListener {
         tv_clear.setOnClickListener(this);
         tv_generate.setOnClickListener(this);
         btn_import.setOnClickListener(this);
-
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -96,22 +95,27 @@ public class ImportFragment extends Fragment implements View.OnClickListener {
     }
 
     private void importData() {
-        List<String> dateStrList = MatcherUtil.getDateFormatStr(editText.getText().toString());
-        List<SendInfo> data = TimeUtil.getInfos(dateStrList);
-        MainActivity activity = (MainActivity) getActivity();
-        new AlertDialog.Builder(getActivity())
-                .setTitle("清空列表")
-                .setMessage("是否清空现有列表？")
-                .setPositiveButton("否", (dialogInterface, i) -> {
-                    if (activity != null) {
-                        activity.importDataToList(data, false);
-                    }
-                }).setNeutralButton("是", (dialogInterface, i) -> {
-            if (activity != null) {
-                activity.importDataToList(data, true);
-            }
-        }).create().show();
 
+        try {
+            List<SendInfo> dateStrList = null;
+            dateStrList = MatcherUtil.getFormat(editText.getText().toString());
+            MainActivity activity = (MainActivity) getActivity();
+            List<SendInfo> finalDateStrList = dateStrList;
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("清空列表")
+                    .setMessage("是否清空现有列表？")
+                    .setPositiveButton("否", (dialogInterface, i) -> {
+                        if (activity != null) {
+                            activity.importDataToList(finalDateStrList, false);
+                        }
+                    }).setNeutralButton("是", (dialogInterface, i) -> {
+                if (activity != null) {
+                    activity.importDataToList(finalDateStrList, true);
+                }
+            }).create().show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 }

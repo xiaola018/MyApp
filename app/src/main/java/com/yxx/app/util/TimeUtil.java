@@ -103,6 +103,49 @@ public class TimeUtil {
         return str;
     }
 
+    public static void setInfoNYR(SendInfo sendInfo, String dateStr) throws Exception{
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy年MM月dd日");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy/MM/dd");
+        Date date = null;
+        if(!TextUtils.isEmpty(dateStr)){
+            if (dateStr.contains("年")) {
+                date = sdf1.parse(dateStr.trim());
+            } else if (dateStr.contains("-")) {
+                date = sdf2.parse(dateStr.trim());
+            } else if (dateStr.contains("/")) {
+                date = sdf3.parse(dateStr.trim());
+            }
+        }
+        Calendar c = Calendar.getInstance();
+        if (date != null) {
+            c.setTime(date);
+        }
+        sendInfo.year = String.valueOf(c.get(Calendar.YEAR));
+        sendInfo.month = lengthFormat(c.get(Calendar.MONTH) + 1);
+        sendInfo.day = lengthFormat(c.get(Calendar.DAY_OF_MONTH));
+    }
+
+    public static void setInfoHM(SendInfo sendInfo, String dateStr)throws Exception{
+        if(!TextUtils.isEmpty(dateStr)){
+            if(dateStr.contains("-")){
+                String[] timeArray = dateStr.split("-");
+                if(timeArray[0].contains(":")){
+                    sendInfo.u_hours = timeArray[0].split(":")[0];
+                    sendInfo.u_minute = timeArray[0].split(":")[1];
+                }
+                if(timeArray.length > 1){
+                    sendInfo.d_hours = timeArray[1].split(":")[0];
+                    sendInfo.d_minute = timeArray[1].split(":")[1];
+                }
+            }else{
+                sendInfo.u_hours = dateStr.split(":")[0];
+                sendInfo.u_minute = dateStr.split(":")[1];
+            }
+        }
+    }
+
+    @Deprecated
     public static List<SendInfo> getInfos(List<String> stringList) {
         SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy年MM月dd日 HH:mm");
         SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm");

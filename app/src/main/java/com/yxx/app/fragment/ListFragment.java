@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.util.Hex;
@@ -181,7 +182,7 @@ public class ListFragment extends Fragment implements View.OnClickListener {
                 mAdapter.notifyDataSetChanged();
                 break;
             case R.id.btn_all_send:
-                Hex.listToHexStr(mAdapter.getData());
+                BluetoothManager.get().sendData(mAdapter.getData());
                 break;
         }
     }

@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -86,6 +87,19 @@ public class MainActivity extends AppCompatActivity implements
         toolbar = findViewById(R.id.toolbar);
         mViewPager = findViewById(R.id.viewPager);
         mTabLayout = findViewById(R.id.tabLayout);
+
+/*        String hex = "3B00";
+        byte[] bs = Hex.hexToByteArray(hex);
+        for(byte b : bs){
+            LogUtil.d(" == b == " + b);
+        }
+
+        String hexss = Hex.bytesToHex(bs);
+        LogUtil.d("hexss = " + hexss);
+        LogUtil.d(" num == " + Integer.parseInt("E057", 16));
+        LogUtil.d(" num == " + Integer.toHexString(Integer.parseInt("E057", 16)));*/
+
+        startActivity(new Intent(this, ReplaceCityActivity.class));
     }
 
     private void initView() {

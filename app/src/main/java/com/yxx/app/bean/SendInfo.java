@@ -12,14 +12,14 @@ import java.util.Date;
  * Description:
  */
 public class SendInfo {
-    public String year;
-    public String month;
-    public String day;
-    public String u_hours;
-    public String u_minute;
-    public String d_hours;
-    public String d_minute;
-    public String price;
+    public String year = "";
+    public String month = "";
+    public String day = "";
+    public String u_hours = "";
+    public String u_minute = "";
+    public String d_hours = "";
+    public String d_minute = "";
+    public String price = "";
 
     public int type;
 
@@ -39,5 +39,20 @@ public class SendInfo {
             this.d_hours = String.valueOf(calendar.get(Calendar.HOUR_OF_DAY));
             this.d_minute = String.valueOf(calendar.get(Calendar.MINUTE));
         }
+    }
+
+    @Override
+    public String toString() {
+        return "SendInfo{" +
+                "year='" + year + '\'' +
+                ", month='" + month + '\'' +
+                ", day='" + day + '\'' +
+                ", u_hours='" + u_hours + '\'' +
+                ", u_minute='" + u_minute + '\'' +
+                ", d_hours='" + d_hours + '\'' +
+                ", d_minute='" + d_minute + '\'' +
+                ", price='" + price + '\'' +
+                ", type=" + type +
+                '}';
     }
 }
