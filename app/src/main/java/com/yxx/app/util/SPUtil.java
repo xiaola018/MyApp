@@ -33,8 +33,8 @@ public class SPUtil {
         return sp.getInt(key, 0);
     }
 
-    public static void setInt(String key, int value){
-        eEditor.putInt(key, value);
+    public static void putInt(String key, int value){
+        eEditor.putInt(key, value).apply();
     }
 
 
@@ -47,9 +47,4 @@ public class SPUtil {
     public static int isNowPrint(){
         return getInt(CACHE_IS_NOW_PRINT);
     }
-
-    public static void setNowPrint(){
-        setInt(CACHE_IS_NOW_PRINT, isNowPrint() == 1 ? 0 : 1);
-    }
-//    public static void
 }

@@ -22,19 +22,25 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.common.primitives.Bytes;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.bean.DeviceModel;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.dialog.DiscoveryBluetoothDialog;
+import com.yxx.app.dialog.NeverMenuPopup;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
@@ -61,9 +67,10 @@ public class MainActivity extends AppCompatActivity implements
     private Toolbar toolbar;
     private ViewPager2 mViewPager;
     private TabLayout mTabLayout;
+    private LinearLayout ll_custom;
 
     private MenuConnectView menuConnectView;
-
+    private NeverMenuPopup menuPopup;
 
     private InputFragment inputFragment;
     private ImportFragment importFragment;
@@ -88,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements
         toolbar = findViewById(R.id.toolbar);
         mViewPager = findViewById(R.id.viewPager);
         mTabLayout = findViewById(R.id.tabLayout);
+        ll_custom = findViewById(R.id.ll_custom);
 
 /*        String hex = "3B00";
         byte[] bs = Hex.hexToByteArray(hex);
@@ -100,13 +108,12 @@ public class MainActivity extends AppCompatActivity implements
         LogUtil.d(" num == " + Integer.parseInt("E057", 16));
         LogUtil.d(" num == " + Integer.toHexString(Integer.parseInt("E057", 16)));*/
 
-    //    startActivity(new Intent(this, ReplaceCityActivity.class));
 
-        String numHex = Hex.decToHex(1);
-        LogUtil.d("== numHex== " + numHex);
-        byte[] numBytes = Hex.hexToByteArray(numHex);
+    //    String numHex = Hex.decToHex(1);
+   //     LogUtil.d("== numHex== " + numHex);
+  //      byte[] numBytes = Hex.hexToByteArray(numHex);
     ///    for(byte b : numBytes){
-            LogUtil.d( " == bbb=== " + Hex.bytesToHex(numBytes));
+    //        LogUtil.d( " == bbb=== " + Hex.bytesToHex(numBytes));
    //     }
     }
 
@@ -114,7 +121,6 @@ public class MainActivity extends AppCompatActivity implements
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         discoveryDialog.setBluetoothCallback(this);
         setSupportActionBar(toolbar);
-
     }
 
 
@@ -209,9 +215,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        if(item.getItemId() == R.id.menu_connect){
-            checkPermis();
-        }
+        showPopup();
         return false;
     }
 
@@ -356,4 +360,32 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
+    private void showPopup(){
+        WindowManager wm = (WindowManager) MyApplication.getInstance().getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(metrics);
+        if(menuPopup == null){
+            menuPopup = new NeverMenuPopup(this);
+        }
+
+        int x = metrics.widthPixels - 300;
+        menuPopup.showAsDropDown(toolbar, x, 0, Gravity.NO_GRAVITY);
+
+        menuPopup.setOnPopupClickCallbck(new NeverMenuPopup.OnPopupClickCallbck() {
+            @Override
+            public void onDiscoveryBluetooth() {
+                openBluetooth();
+            }
+
+            @Override
+            public void onReplaceCity() {
+                startActivity(new Intent(MainActivity.this, ReplaceCityActivity.class));
+            }
+
+            @Override
+            public void checkUpdate() {
+
+            }
+        });
+    }
 }

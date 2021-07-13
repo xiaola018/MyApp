@@ -1,7 +1,15 @@
 package com.yxx.app.activity;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,12 +17,34 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.lljjcoder.Interface.OnCustomCityPickerItemClickListener;
 import com.lljjcoder.bean.CustomCityData;
+import com.lljjcoder.citywheel.CityConfig;
 import com.lljjcoder.citywheel.CustomConfig;
 import com.lljjcoder.style.citycustome.CustomCityPicker;
+import com.lljjcoder.style.citypickerview.CityPickerView;
+import com.lljjcoder.style.citypickerview.widget.wheel.OnWheelChangedListener;
+import com.lljjcoder.style.citypickerview.widget.wheel.WheelView;
+import com.lljjcoder.style.citypickerview.widget.wheel.adapters.ArrayWheelAdapter;
+import com.yxx.app.MyApplication;
 import com.yxx.app.R;
+import com.yxx.app.bean.ProInfo;
+import com.yxx.app.dialog.NeverMenuPopup;
+import com.yxx.app.util.JsonUtils;
+import com.yxx.app.util.LogUtil;
+import com.yxx.app.view.MenuConnectView;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Author: yangxl
@@ -27,135 +57,175 @@ public class ReplaceCityActivity extends AppCompatActivity {
      * 自定义数据源-省份数据
      */
     private List<CustomCityData> mProvinceListData = new ArrayList<>();
-    private CustomCityPicker customCityPicker = null;
+
+    private WheelView proWheelView;
+    private WheelView cityWheelView;
+    private Toolbar toolbar;
+    private Button btn_replace;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_replace_city);
 
-        ((Toolbar)findViewById(R.id.toolbar)).setNavigationOnClickListener(new View.OnClickListener() {
+        initView();
+
+        readJsonText();
+    }
+
+    private void initView(){
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        proWheelView = findViewById(R.id.proWheelView);
+        cityWheelView = findViewById(R.id.cityWheelView);
+        proWheelView = findViewById(R.id.proWheelView);
+        cityWheelView = findViewById(R.id.cityWheelView);
+        btn_replace = findViewById(R.id.btn_replace);
+
+
+        proWheelView.addChangingListener(new OnWheelChangedListener() {
+            @Override
+            public void onChanged(WheelView wheel, int oldValue, int newValue) {
+                updateCities();
+            }
+        });
+
+        btn_replace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setData();
+                CustomCityData proData = mProvinceListData.get(proWheelView.getCurrentItem());
+                LogUtil.d(" 省份 : " + proData.getName());
+                LogUtil.d(" 城市 : " + proData.getList().get(cityWheelView.getCurrentItem()));
             }
         });
-
-
     }
 
-    private void setData(){
-
-
-        CustomCityData jsPro = new CustomCityData("10000", "江苏省");
-
-        CustomCityData ycCity = new CustomCityData("11000", "盐城市");
-        List<CustomCityData> ycDistList = new ArrayList<>();
-        ycDistList.add(new CustomCityData("11100", "滨海县"));
-        ycDistList.add(new CustomCityData("11200", "阜宁县"));
-        ycDistList.add(new CustomCityData("11300", "大丰市"));
-        ycDistList.add(new CustomCityData("11400", "盐都区"));
-        ycCity.setList(ycDistList);
-
-        CustomCityData czCity = new CustomCityData("12000", "常州市");
-        List<CustomCityData> czDistList = new ArrayList<>();
-        czDistList.add(new CustomCityData("12100", "新北区"));
-        czDistList.add(new CustomCityData("12200", "天宁区"));
-        czDistList.add(new CustomCityData("12300", "钟楼区"));
-        czDistList.add(new CustomCityData("12400", "武进区"));
-        czCity.setList(czDistList);
-
-        List<CustomCityData> jsCityList = new ArrayList<>();
-        jsCityList.add(ycCity);
-        jsCityList.add(czCity);
-
-        jsPro.setList(jsCityList);
-
-
-        CustomCityData zjPro = new CustomCityData("20000", "浙江省");
-
-        CustomCityData nbCity = new CustomCityData("21000", "宁波市");
-        List<CustomCityData> nbDistList = new ArrayList<>();
-        nbDistList.add(new CustomCityData("21100", "海曙区"));
-        nbDistList.add(new CustomCityData("21200", "鄞州区"));
-        nbCity.setList(nbDistList);
-
-        CustomCityData hzCity = new CustomCityData("22000", "杭州市");
-        List<CustomCityData> hzDistList = new ArrayList<>();
-        hzDistList.add(new CustomCityData("22100", "上城区"));
-        hzDistList.add(new CustomCityData("22200", "西湖区"));
-        hzDistList.add(new CustomCityData("22300", "下沙区"));
-        hzCity.setList(hzDistList);
-
-        List<CustomCityData> zjCityList = new ArrayList<>();
-        zjCityList.add(hzCity);
-        zjCityList.add(nbCity);
-
-        zjPro.setList(zjCityList);
-
-
-        CustomCityData gdPro = new CustomCityData("30000", "广东省");
-
-        CustomCityData fjCity = new CustomCityData("21000", "潮州市");
-        List<CustomCityData> fjDistList = new ArrayList<>();
-        fjDistList.add(new CustomCityData("21100", "湘桥区"));
-        fjDistList.add(new CustomCityData("21200", "潮安区"));
-        fjCity.setList(fjDistList);
-
-
-
-        CustomCityData gzCity = new CustomCityData("22000", "广州市");
-        List<CustomCityData> szDistList = new ArrayList<>();
-        szDistList.add(new CustomCityData("22100", "荔湾区"));
-        szDistList.add(new CustomCityData("22200", "增城区"));
-        szDistList.add(new CustomCityData("22300", "从化区"));
-        szDistList.add(new CustomCityData("22400", "南沙区"));
-        szDistList.add(new CustomCityData("22500", "花都区"));
-        szDistList.add(new CustomCityData("22600", "番禺区"));
-        szDistList.add(new CustomCityData("22700", "黄埔区"));
-        szDistList.add(new CustomCityData("22800", "白云区"));
-        szDistList.add(new CustomCityData("22900", "天河区"));
-        szDistList.add(new CustomCityData("22110", "海珠区"));
-        szDistList.add(new CustomCityData("22120", "越秀区"));
-        gzCity.setList(szDistList);
-
-        List<CustomCityData> gdCityList = new ArrayList<>();
-        gdCityList.add(gzCity);
-        gdCityList.add(fjCity);
-
-        gdPro.setList(gdCityList);
-
-
-        mProvinceListData.add(jsPro);
-        mProvinceListData.add(zjPro);
-        mProvinceListData.add(gdPro);
-
-        CustomConfig cityConfig = new CustomConfig.Builder()
-                .title("选择城市")
-                .visibleItemsCount(5)
-                .setCityData(mProvinceListData)//设置数据源
-                .provinceCyclic(false)
-                .cityCyclic(false)
-                .districtCyclic(false)
-                .build();
-
-
-        customCityPicker = new CustomCityPicker(this);
-
-        customCityPicker.setCustomConfig(cityConfig);
-        customCityPicker.setOnCustomCityPickerItemClickListener(new OnCustomCityPickerItemClickListener() {
+    /**
+     * 读取省份城市文件
+     */
+    private void readJsonText() {
+        Observable.create(new ObservableOnSubscribe<List<CustomCityData>>() {
             @Override
-            public void onSelected(CustomCityData province, CustomCityData city, CustomCityData district) {
-                if (province != null && city != null && district != null) {
-/*                    resultTv.setText("province：" + province.getName() + "    " + province.getId() + "\n" +
-                            "city：" + city.getName() + "    " + city.getId() + "\n" +
-                            "area：" + district.getName() + "    " + district.getId() + "\n");*/
-                }else{
-                 //   resultTv.setText("结果出错！");
+            public void subscribe(@NonNull ObservableEmitter<List<CustomCityData>> emitter) throws Exception {
+                try {
+                    InputStreamReader inputReader = new InputStreamReader(ReplaceCityActivity.this.getResources().getAssets().open("pro_city_json.txt"));
+                    BufferedReader bufReader = new BufferedReader(inputReader);
+                    StringBuilder stringBuffer = new StringBuilder();
+                    String str = "";
+                    while ((str = bufReader.readLine()) != null) {
+                        stringBuffer.append(str);
+                    }
+                    List<ProInfo> proInfoList = JsonUtils.fromJsonArray(stringBuffer.toString(), ProInfo.class);
+
+                    for(ProInfo proInfo : proInfoList){
+                        CustomCityData pro = new CustomCityData(proInfo.getId(), proInfo.getName());
+                        List<CustomCityData> cityList = new ArrayList<>();
+                        for(ProInfo cityInfo : proInfo.getCities()){
+                            CustomCityData city = new CustomCityData(cityInfo.getId(), cityInfo.getName());
+                            cityList.add(city);
+                        }
+                        pro.setList(cityList);
+                        mProvinceListData.add(pro);
+                    }
+
+                    emitter.onNext(mProvinceListData);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    emitter.onComplete();
                 }
             }
-        });
-        customCityPicker.showCityPicker();
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<CustomCityData>>() {
+                    @Override
+                    public void onSubscribe(@NonNull Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(@NonNull List<CustomCityData> data) {
+                        updatePro();
+                    }
+
+                    @Override
+                    public void onError(@NonNull Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
     }
 
+    private void  updatePro(){
+        ArrayWheelAdapter arrayWheelAdapter = new ArrayWheelAdapter<CustomCityData>(this, mProvinceListData);
+        //自定义item
+/*        if (config.getCustomItemLayout() != CityConfig.NONE && config.getCustomItemTextViewId() != CityConfig.NONE) {
+            arrayWheelAdapter.setItemResource(config.getCustomItemLayout());
+            arrayWheelAdapter.setItemTextResource(config.getCustomItemTextViewId());
+        } else {
+            arrayWheelAdapter.setItemResource(R.layout.default_item_city);
+            arrayWheelAdapter.setItemTextResource(R.id.default_item_city_name_tv);
+        }*/
+        proWheelView.setViewAdapter(arrayWheelAdapter);
+        proWheelView.setCurrentItem(0);
+        proWheelView.setVisibleItems(5);
+        proWheelView.setCyclic(false);
+
+        updateCities();
+    }
+
+    /**
+     * 根据当前的省，更新市WheelView的信息
+     */
+    private void updateCities() {
+        //省份滚轮滑动的当前位置
+        int pCurrent = proWheelView.getCurrentItem();
+
+        //省份选中的名称
+        List<CustomCityData> proArra = mProvinceListData;
+        CustomCityData mProvinceBean = proArra.get(pCurrent);
+
+        List<CustomCityData> pCityList = mProvinceBean.getList();
+        if (pCityList == null) return;
+
+
+        //设置最初的默认城市
+/*        int cityDefault = -1;
+        if (!TextUtils.isEmpty(config.getDefaultCityName()) && pCityList.size() > 0) {
+            for (int i = 0; i < pCityList.size(); i++) {
+                if (pCityList.get(i).getName().startsWith(config.getDefaultCityName())) {
+                    cityDefault = i;
+                    break;
+                }
+            }
+        }*/
+
+
+        ArrayWheelAdapter cityWheel = new ArrayWheelAdapter<CustomCityData>(this, pCityList);
+        //自定义item
+/*        if (config.getCustomItemLayout() != CityConfig.NONE && config.getCustomItemTextViewId() != CityConfig.NONE) {
+            cityWheel.setItemResource(config.getCustomItemLayout());
+            cityWheel.setItemTextResource(config.getCustomItemTextViewId());
+        } else {
+            cityWheel.setItemResource(R.layout.default_item_city);
+            cityWheel.setItemTextResource(R.id.default_item_city_name_tv);
+        }*/
+
+        cityWheelView.setCyclic(false);
+        cityWheelView.setViewAdapter(cityWheel);
+        cityWheelView.setCurrentItem(0);
+        cityWheelView.setVisibleItems(5);
+/*        if (-1 != cityDefault) {
+            mViewCity.setCurrentItem(cityDefault);
+        } else {
+            mViewCity.setCurrentItem(0);
+        }*/
+
+
+        cityWheelView.setViewAdapter(cityWheel);
+
+    }
 }

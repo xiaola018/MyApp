@@ -74,6 +74,10 @@ public class ListFragment extends Fragment implements View.OnClickListener {
         btn_all_send.setOnClickListener(this);
     }
 
+    public void setBtnEnable(boolean enable){
+        btn_all_send.setEnabled(enable);
+    }
+
     private void initAdapter() {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         String jsonStr = SPUtil.getString(SPUtil.CACHE_DATA_LIST);
@@ -104,10 +108,16 @@ public class ListFragment extends Fragment implements View.OnClickListener {
             showEditTextView(true);
         }
         mAdapter.add(data);
-        //保存数据
-        String jsonStr = JsonUtils.toJson(mAdapter.getData());
-        SPUtil.putString(SPUtil.CACHE_DATA_LIST, jsonStr);
+        saveCacheData();
         setNumPrice();
+    }
+
+    private void saveCacheData(){
+        if(mAdapter != null){
+            //保存数据
+            String jsonStr = JsonUtils.toJson(mAdapter.getData());
+            SPUtil.putString(SPUtil.CACHE_DATA_LIST, jsonStr);
+        }
     }
 
     private void setNumPrice(){
@@ -280,6 +290,20 @@ public class ListFragment extends Fragment implements View.OnClickListener {
                     iv_send.setVisibility(View.GONE);
                     iv_remove.setVisibility(View.VISIBLE);
                 }
+                iv_remove.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        getData().remove(getLayoutPosition());
+                        notifyDataSetChanged();
+                        saveCacheData();
+                    }
+                });
+                iv_send.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                    }
+                });
             }
         }
     }
