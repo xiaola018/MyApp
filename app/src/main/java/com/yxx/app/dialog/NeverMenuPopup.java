@@ -11,9 +11,11 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.yxx.app.R;
+import com.yxx.app.UpdateManager;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
 
@@ -28,7 +30,8 @@ public class NeverMenuPopup extends PopupWindow implements View.OnClickListener 
     private TextView list1;
     private TextView list2;
     private LinearLayout list3;
-    private TextView list4;
+    private RelativeLayout list4;
+    private TextView tvVersionName;
     private CheckBox checkbox;
 
     private OnPopupClickCallbck onPopupClickCallbck;
@@ -50,6 +53,9 @@ public class NeverMenuPopup extends PopupWindow implements View.OnClickListener 
         list3 = mContentView.findViewById(R.id.list3);
         list4 = mContentView.findViewById(R.id.list4);
         checkbox = mContentView.findViewById(R.id.checkbox);
+        tvVersionName = mContentView.findViewById(R.id.tvVersionName);
+
+        tvVersionName.setText(String.format("v%s", UpdateManager.versionName()));
 
         list1.setOnClickListener(this);
         list2.setOnClickListener(this);

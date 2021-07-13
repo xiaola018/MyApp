@@ -37,9 +37,13 @@ import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
 import com.yxx.app.R;
+import com.yxx.app.UpdateManager;
+import com.yxx.app.api.Api;
+import com.yxx.app.api.TestInterface;
 import com.yxx.app.bean.DeviceModel;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.dialog.DiscoveryBluetoothDialog;
+import com.yxx.app.dialog.LoadingDialog;
 import com.yxx.app.dialog.NeverMenuPopup;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
@@ -55,7 +59,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener ,
@@ -384,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements
 
             @Override
             public void checkUpdate() {
-
+                UpdateManager.check(MainActivity.this,false);
             }
         });
     }
