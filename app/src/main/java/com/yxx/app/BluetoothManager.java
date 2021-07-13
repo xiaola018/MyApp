@@ -21,10 +21,12 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import com.google.common.io.ByteSource;
 import com.google.common.primitives.Bytes;
 import com.yxx.app.bean.DeviceModel;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.util.BitUtil;
+import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.ModuleParameters;
@@ -44,12 +46,7 @@ import java.util.concurrent.Executors;
  */
 public class BluetoothManager {
 
-    //数据包特征首字符
-    private final static int FEATURES_START_CHAR = 160;
-    //数据包特征尾字符
-    private final static int FEATURES_END_CHAR = 10;
-    //命令类型
-    private final static int CMD_TYPE = 26;
+
 
     //蓝牙的特征值，发送
     private final static String SERVICE_EIGENVALUE_SEND = "0000ffe1-0000-1000-8000-00805f9b34fb";
@@ -362,28 +359,12 @@ public class BluetoothManager {
 
     //发送线程 --> app发送给模块数据
     private void sendThread(byte[] buff) {
-
-        int ss = 2021;
-        String hex = Hex.decToHex(ss);
-        int ss2 = 5;
-        String hex2 = Hex.decToHex(ss2);
-        int ss3 = 8;
-        String hex3 = Hex.decToHex(ss3);
-
-        //   buff = Hex.hexToByteArray(hex.toUpperCase());
-
-        //    buff = new byte[]{-27,7,Hex.hexToByte(hex2),Hex.hexToByte(hex3)};
-//
-        //    buff = new byte[]{72 ,72 ,74 ,66 ,66 ,63 ,63 ,66 ,66, 68 ,
-        //           0x6A, 0x6A ,0x6B, 0x6B, 0x6B, 68 ,67 ,67 ,25 ,67, 66, 67 ,67, 67, 76, 63,63 ,63 ,63, 66, 66 ,66, 66 ,66, 66, 67 };
-
         LogUtil.d("进入发送方法");
-        byte[] finalBuff = buff;
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                LogUtil.d(" ==== s总数据长度 === " + finalBuff.length);
-                List<byte[]> sendDataArray = getSendDataByte(finalBuff);
+                LogUtil.d(" ==== s总数据长度 === " + buff.length);
+                List<byte[]> sendDataArray = getSendDataByte(buff);
 
 
                 //     mNeedCharacteristic.setValue(finalBuff);
@@ -450,7 +431,7 @@ public class BluetoothManager {
     }
 
     //将String字符串分包为List byte数组
-    private int anum = 50;
+    private int anum = 20;
     private List<byte[]> getSendDataByte(byte[] buff) {
         List<Byte> byteList = Bytes.asList(buff);
         List<byte[]> listSendData = new ArrayList<>();
@@ -517,102 +498,11 @@ public class BluetoothManager {
         }*/
 
         //获取梳理好的字节数据，准备组装发送
-        List<Byte> byteList = combData(infoList);
-        byte[] sendByteArray = Bytes.toArray(byteList);
+        byte[] sendByteArray = ByteUtil.combData(infoList);
 
         sendThread(sendByteArray);
     }
 
-    /**
-     * 梳理数据， 添加对应的头尾，命令类型，长度，校验码等
-     */
-    private List<Byte> combData(List<SendInfo> infoList) {
-        //添加命令类型
-        byte[] cmdBytes = Hex.hexToByteArray(Hex.decToHex(CMD_TYPE));
-        List<Byte> byteList = new ArrayList<>(Bytes.asList(cmdBytes));
-
-        //添加票总张数
-        LogUtil.d("== infoList size == " + infoList.size());
-        String numHex = Hex.decToHex(infoList.size());
-        LogUtil.d("== numHex== " + numHex);
-        byte[] numBytes = Hex.hexToByteArray(numHex);
-        byteList.addAll(Bytes.asList(numBytes));
-
-        //添加状态寄存器
-        byteList.add(BitUtil.bitToByte(BitUtil.getStatusBit()));
-        LogUtil.d("== 到了寄存器这里吗，byteList size == " + byteList.size());
-
-        //把需要打印的数据转成byte
-        List<Byte> printByteList = Hex.listToHexStr(infoList);
-        byteList.addAll(printByteList);
-/*        List<String> hexList = Hex.listToHexStr(infoList);
-        //把hex转成字节后放到list中
-        for (int i = 0; i < hexList.size(); i++) {
-            String hexStr = hexList.get(i);
-            byte[] hexBytes = Hex.hexToByteArray(hexStr);
-            LogUtil.d("票数据拆分后的hexStr  : " + hexStr + " , byte le = " + hexBytes.length);
-            if(hexBytes.length == 0){
-                byteList.add((byte) 0x00);
-            }
-
-            //添加票数据
-            byteList.addAll(Bytes.asList(hexBytes));
-            if(i == hexList.size() - 1 && hexBytes.length == 1){
-                //最后一个是金额，且只有一个字节， 补00到第二个字节
-                byteList.add((byte) 0x00);
-            }
-        }*/
-        LogUtil.d("== 添加了票数据，byteList size == " + byteList.size());
-
-
-        //添加数据包长度。//类型+总张数+寄存器+票数据 = 总长度
-        int length = byteList.size();
-        LogUtil.d("数据包长度 ： " + length);
-        String lengthHex = Hex.decToHex(length);
-        LogUtil.d("数据包长度 hex ： " + lengthHex);
-        byte[] lengthByte = Hex.hexToByteArray(lengthHex);
-        if (lengthByte.length == 1) {
-            //数据包长度只有一个字节， 补全00
-            byteList.add(0, (byte) 0x00);
-        }
-        byteList.addAll(0, Bytes.asList(lengthByte));
-
-        //添加校验码.//类型+总张数+寄存器+票数据 (字节相加)
-        byte signByte = getSign(byteList);
-        LogUtil.d("校验码第一个字节 : " + signByte);
-        byteList.add(0, signByte);
-
-        //添加特征首字符
-        String startCharHex = Hex.decToHex(FEATURES_START_CHAR);
-        LogUtil.d("首字符Hex : " + startCharHex);
-        byte[] startCharByte = Hex.hexToByteArray(startCharHex);
-        byteList.addAll(0, Bytes.asList(startCharByte));
-        byteList.addAll(0, Bytes.asList(startCharByte));
-
-        //添加特征尾字符
-        String endCharHex = Hex.decToHex(FEATURES_END_CHAR);
-        byte[] endCharByte = Hex.hexToByteArray(endCharHex);
-        byteList.addAll(Bytes.asList(endCharByte));
-        byteList.addAll(Bytes.asList(endCharByte));
-
-        return byteList;
-    }
-
-    private byte getSign(List<Byte> byteList) {
-        int byteNum = 0;
-        for (Byte b : byteList) {
-            byteNum += b;
-        }
-        LogUtil.d("字节相加 ： " + byteNum);
-        String byteNumHex = Hex.decToHex(byteNum);
-        LogUtil.d("校验码Hex ： " + byteNum);
-        byte[] bytes = Hex.hexToByteArray(byteNumHex);
-        LogUtil.d("校验码bytes ： " + bytes.toString());
-        if (bytes.length > 0) {
-            return bytes[0];
-        }
-        return 0;
-    }
 
     public interface OnBluetoothListener {
         void open();

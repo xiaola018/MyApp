@@ -100,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements
 
         initListener();
 
-        ByteUtil.abc();
     }
 
     private void findView() {
