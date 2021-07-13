@@ -49,6 +49,7 @@ import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
 import com.yxx.app.fragment.ListFragment;
+import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.view.MenuConnectView;
@@ -98,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements
         initViewPager();
 
         initListener();
+
+        ByteUtil.abc();
     }
 
     private void findView() {
