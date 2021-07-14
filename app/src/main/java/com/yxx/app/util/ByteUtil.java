@@ -19,6 +19,8 @@ public class ByteUtil {
     //命令类型
     private final static int CMD_TYPE = 26;
 
+    private static int DATA_DEFAULT_LENGTH = 20;//每个包默认长度
+
     public static byte int2Byte(int num){
         return (byte)( (num << 24) >> 24 );
     }
@@ -108,4 +110,42 @@ public class ByteUtil {
         }
         return ByteUtil.int2Byte(byteNum);
     }
+
+    //<editor-fold desc="数据分包">
+    /**
+     *  将需要发送的字节数据分包为List byte数组
+     * @param buff     发送的字节数组
+     * @param separateLength    分包的长度
+     * @return
+     */
+    public static List<byte[]> getSendDataByte(byte[] buff, int separateLength) {
+        List<byte[]> listSendData = new ArrayList<>();
+        if(separateLength < DATA_DEFAULT_LENGTH)separateLength = DATA_DEFAULT_LENGTH;
+        int[] sendDataLength = dataSeparate(buff.length, separateLength);
+        for (int i = 0; i < sendDataLength[0]; i++) {
+            byte[] dataFor20 = new byte[separateLength];
+            System.arraycopy(buff, i * separateLength, dataFor20, 0, separateLength);
+            listSendData.add(dataFor20);
+        }
+        if (sendDataLength[1] > 0) {
+            byte[] lastData = new byte[sendDataLength[1]];
+            System.arraycopy(buff, sendDataLength[0] * separateLength, lastData, 0, sendDataLength[1]);
+            listSendData.add(lastData);
+        }
+        return listSendData;
+    }
+
+    /**
+     * 将数据分包处理
+     * @param dataLength    数据总长度
+     * @param separateLength    分包长度（每次发送多少字节）
+     * @return
+     */
+    private static int[] dataSeparate(int dataLength, int separateLength) {
+        int[] lens = new int[2];
+        lens[0] = dataLength / separateLength;
+        lens[1] = dataLength % separateLength;
+        return lens;
+    }
+    //</editor-fold>
 }

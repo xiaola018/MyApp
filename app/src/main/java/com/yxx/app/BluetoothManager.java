@@ -70,6 +70,9 @@ public class BluetoothManager {
 
     private boolean isConnect;
 
+    private int separateLength;//分包的长度
+
+
     public static BluetoothManager get() {
         if (mBluetoothManager == null) mBluetoothManager = new BluetoothManager();
         return mBluetoothManager;
@@ -246,6 +249,7 @@ public class BluetoothManager {
                             isConnect = false;
                             onBluetoothListener.onConnectError();
                         }
+                        requestMtu();
                         //发现蓝牙服务
                         mTimeHandler.postDelayed(new Runnable() {
                             @Override
@@ -354,7 +358,24 @@ public class BluetoothManager {
                 }
                 //    sendHandler( characteristic.getValue().clone());//再转码后发送给handler更新UI
             }
+
+            @Override
+            public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+                super.onMtuChanged(gatt, mtu, status);
+                LogUtil.d("onMtuChanged :  " + mtu);
+                if(gatt != null && status == BluetoothGatt.GATT_SUCCESS){
+                    separateLength = mtu;
+                }
+            }
         });
+    }
+
+    private void requestMtu(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            if(mBluetoothGatt != null){
+                mBluetoothGatt.requestMtu(512);
+            }
+        }
     }
 
     //发送线程 --> app发送给模块数据
@@ -364,17 +385,15 @@ public class BluetoothManager {
             @Override
             public void run() {
                 LogUtil.d(" ==== s总数据长度 === " + buff.length);
-                List<byte[]> sendDataArray = getSendDataByte(buff);
+                List<byte[]> sendDataArray = ByteUtil.getSendDataByte(buff, separateLength);
 
-
-                //     mNeedCharacteristic.setValue(finalBuff);
-                //     mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节
+/*                    byte[] bb = new byte[]{-27,7,7,7,7,-27,9,-12,44,67,45,44,9,7,-22,-5,55,5,9,12,56
+                        ,66,77,88,99,12,1,14,-27,7};
+                     mNeedCharacteristic.setValue(bb);
+                     mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节*/
                 int number = 0;
                 for (byte[] sendData : sendDataArray) {
                     LogUtil.d(" ==== sendData  length === " + sendData.length);
-                    for(byte b : sendData){
-                        LogUtil.d(" ==== bbbbb  === " + b);
-                    }
                     try {
                     //    if (ModuleParameters.getLevel() != 0) {//设置发送间隔等级，从0到10，
                     //        Thread.sleep(1);//最高,多延时100ms
@@ -428,56 +447,6 @@ public class BluetoothManager {
         };
         mThreadService.execute(runnable);
         LogUtil.d("进入线程池发送方法");
-    }
-
-    //将String字符串分包为List byte数组
-    private int anum = 20;
-    private List<byte[]> getSendDataByte(byte[] buff) {
-        List<Byte> byteList = Bytes.asList(buff);
-        List<byte[]> listSendData = new ArrayList<>();
-/*        int size = 512;
-        int num = (int) Math.ceil((double) buff.length / size);
-        LogUtil.d("===== send um === " + num);
-        int curr = 0;
-        for (int i = 0; i < num; i++) {
-            if (buff.length <= size) {
-                listSendData.add(buff);
-            } else {
-                if (buff.length - curr > size) {
-               //    byteList.subList(curr, size);
-               //     Bytes.toArray( byteList.subList(curr, size));
-                    listSendData.addAll(Collections.singleton(Bytes.toArray(byteList.subList(curr, size))));
-                    curr += size;
-                } else {
-                    listSendData.addAll(Collections.singleton(Bytes.toArray(byteList.subList(curr, byteList.size()))));
-                }
-            }
-        }*/
-
-        int[] sendDataLength = dataSeparate(buff.length);
-        LogUtil.d(" === sendDataLength === " + sendDataLength.length);
-        LogUtil.d(" === sendDataLength[0] === " + sendDataLength[0]);
-        for (int i = 0; i < sendDataLength[0]; i++) {
-            byte[] dataFor20 = new byte[anum];
-            System.arraycopy(buff, i * anum, dataFor20, 0, anum);
-            listSendData.add(dataFor20);
-        }
-        LogUtil.d(" === listSendData === " + listSendData.size());
-        LogUtil.d(" === sendDataLength[1] === " + sendDataLength[1]);
-        if (sendDataLength[1] > 0) {
-            byte[] lastData = new byte[sendDataLength[1]];
-            System.arraycopy(buff, sendDataLength[0] * anum, lastData, 0, sendDataLength[1]);
-            listSendData.add(lastData);
-        }
-        return listSendData;
-    }
-
-    //将数据分包
-    private int[] dataSeparate(int len) {
-        int[] lens = new int[2];
-        lens[0] = len / anum;
-        lens[1] = len % anum;
-        return lens;
     }
 
     public void sendData(SendInfo sendInfo) {
