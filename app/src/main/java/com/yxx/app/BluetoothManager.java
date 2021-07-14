@@ -30,9 +30,11 @@ import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.ModuleParameters;
+import com.yxx.app.util.TemplateScheme;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +47,6 @@ import java.util.concurrent.Executors;
  * Description:
  */
 public class BluetoothManager {
-
 
 
     //蓝牙的特征值，发送
@@ -71,6 +72,8 @@ public class BluetoothManager {
     private boolean isConnect;
 
     private int separateLength;//分包的长度
+
+    private TemplateScheme mTemplateScheme;//下载协议
 
 
     public static BluetoothManager get() {
@@ -150,6 +153,7 @@ public class BluetoothManager {
         }
     }
 
+    //<editor-fold desc="状态广播">
     /**
      * 蓝牙状态广播
      */
@@ -220,7 +224,9 @@ public class BluetoothManager {
             }
         }
     };
+    //</editor-fold>
 
+    //<editor-fold desc="蓝牙连接">
     public void connectGatt(Context context, DeviceModel deviceModel) {
         Runnable runnable = new Runnable() {
             @Override
@@ -348,9 +354,8 @@ public class BluetoothManager {
             public void onCharacteristicChanged(BluetoothGatt gatt,
                                                 BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
-                //模块发送的所有数据都会回调到这里
                 //蓝牙发送给app的回调
-                LogUtil.d("接收到数据回调");
+                LogUtil.d("接收到数据回调 = " + Arrays.toString(characteristic.getValue()));
                 try {
                     LogUtil.d("数据是：" + new String(characteristic.getValue(), 0, characteristic.getValue().length, "GB2312"));
                 } catch (UnsupportedEncodingException e) {
@@ -363,92 +368,102 @@ public class BluetoothManager {
             public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                 super.onMtuChanged(gatt, mtu, status);
                 LogUtil.d("onMtuChanged :  " + mtu);
-                if(gatt != null && status == BluetoothGatt.GATT_SUCCESS){
+                if (gatt != null && status == BluetoothGatt.GATT_SUCCESS) {
                     separateLength = mtu;
                 }
             }
         });
     }
 
-    private void requestMtu(){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            if(mBluetoothGatt != null){
+    private void requestMtu() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (mBluetoothGatt != null) {
                 mBluetoothGatt.requestMtu(512);
             }
         }
     }
+    //</editor-fold>
 
-    //发送线程 --> app发送给模块数据
-    private void sendThread(byte[] buff) {
-        LogUtil.d("进入发送方法");
+    //<editor-fold desc="发送数据到模块">
+
+    /**
+     *  不开启新线程发送
+     * @param buff   发送到模板的数据
+     */
+    public void sendByte(byte[] buff) {
+        LogUtil.d("进入发送方法, 数据总长度 == " + buff.length);
+        //根据长度获取分包后的数据
+        List<byte[]> sendDataArray = ByteUtil.getSendDataByte(buff, separateLength);
+        int number = 0;
+        for (byte[] sendData : sendDataArray) {
+            try {
+                Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
+                mNeedCharacteristic.setValue(sendData);
+                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节
+                if (sendDataSign) {
+                    Thread.sleep(1000 + 500 * ModuleParameters.getState());
+                    LogUtil.d("发送失败....");
+                    onBluetoothListener.onSendFaile();
+                    sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
+                    if (sendDataSign) {
+                        LogUtil.d("无法发送数据");
+                        return;
+                    }
+                }
+                while (!sendDataSign) {
+                    Thread.sleep(10 + 10 * ModuleParameters.getState());
+                    number++;
+                    if (number == 40) {
+                        mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
+                        sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
+                        LogUtil.d("额外发送一次," + sendDataSign);
+                    }
+                    if (number == 80) {
+                        mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
+                        sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
+                        LogUtil.d("再次额外发送一次," + sendDataSign);
+                    }
+
+                    if (number == 180) {
+                        mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
+                        sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
+                        LogUtil.d("第三次额外发送一次," + sendDataSign);
+                    }
+
+                    if (number == 300) {
+                        sendDataSign = true;
+                        onBluetoothListener.onSendFaile();
+                        LogUtil.d("发送失败,关闭线程");
+                        return;
+                    }
+                }
+                number = 0;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    /**
+     *  开启新线程发送
+     * @param buff  发送到模板的数据
+     */
+    public void sendThread(byte[] buff){
+
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                LogUtil.d(" ==== s总数据长度 === " + buff.length);
-                List<byte[]> sendDataArray = ByteUtil.getSendDataByte(buff, separateLength);
-
-/*                    byte[] bb = new byte[]{-27,7,7,7,7,-27,9,-12,44,67,45,44,9,7,-22,-5,55,5,9,12,56
-                        ,66,77,88,99,12,1,14,-27,7};
-                     mNeedCharacteristic.setValue(bb);
-                     mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节*/
-                int number = 0;
-                for (byte[] sendData : sendDataArray) {
-                    LogUtil.d(" ==== sendData  length === " + sendData.length);
-                    try {
-                    //    if (ModuleParameters.getLevel() != 0) {//设置发送间隔等级，从0到10，
-                    //        Thread.sleep(1);//最高,多延时100ms
-                    //    }
-                        LogUtil.d("每次延时 ： " + (5 + 10 * ModuleParameters.getState()));
-                        Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
-                    //    Thread.sleep(100);
-                        mNeedCharacteristic.setValue(sendData);
-                        sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节
-                        if (sendDataSign) {
-                            Thread.sleep(1000 + 500 * ModuleParameters.getState());
-                            LogUtil.d("发送失败....");
-                            sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
-                            if (sendDataSign) {
-                                LogUtil.d("无法发送数据");
-                                return;
-                            }
-                        }
-                        while (!sendDataSign) {
-                            Thread.sleep(10 + 10 * ModuleParameters.getState());
-                            number++;
-                            if (number == 40) {
-                                mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
-                                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
-                                LogUtil.d("额外发送一次," + sendDataSign);
-                            }
-                            if (number == 80) {
-                                mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
-                                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
-                                LogUtil.d("再次额外发送一次," + sendDataSign);
-                            }
-
-                            if (number == 180) {
-                                mNeedCharacteristic.setValue(new byte[0]);//额外发送会导致发包重复，所以发一个空包去提醒
-                                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
-                                LogUtil.d("第三次额外发送一次," + sendDataSign);
-                            }
-
-                            if (number == 300) {
-                                sendDataSign = true;
-                                LogUtil.d("发送失败,关闭线程");
-                                return;
-                            }
-                        }
-                        number = 0;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                sendByte(buff);
             }
         };
         mThreadService.execute(runnable);
-        LogUtil.d("进入线程池发送方法");
     }
 
+    /**
+     *  发送单条打印数据
+     * @param sendInfo
+     */
     public void sendData(SendInfo sendInfo) {
         List<SendInfo> list = new ArrayList<>();
         list.add(sendInfo);
@@ -461,18 +476,29 @@ public class BluetoothManager {
      * @param infoList 操作页面下封装好的数据
      */
     public void sendData(List<SendInfo> infoList) {
-/*        if(!isConnect || !isOpen()){
-            Toast.makeText(MyApplication.getInstance(), "蓝牙未连接",Toast.LENGTH_LONG).show();
+        if (!isConnect || !isOpen()) {
+            Toast.makeText(MyApplication.getInstance(), "蓝牙未连接", Toast.LENGTH_LONG).show();
             return;
-        }*/
+        }
 
         //获取梳理好的字节数据，准备组装发送
         byte[] sendByteArray = ByteUtil.combData(infoList);
-
         sendThread(sendByteArray);
+    }
+    //</editor-fold>
+
+    /**
+     *  开启模板数据下载协议
+     * @param fileName  读取的二进制文件
+     */
+    public void templateDownload(String fileName){
+        mTemplateScheme = new TemplateScheme();
+        //发送下载指令
+    //    sendThread(mTemplateScheme.getStartDownloadCmd());
     }
 
 
+    //<editor-fold desc="监听回调">
     public interface OnBluetoothListener {
         void open();
 
@@ -495,5 +521,8 @@ public class BluetoothManager {
         void onConnectError();
 
         void onStateDisconnected();
+
+        void onSendFaile();
     }
+    //</editor-fold>
 }

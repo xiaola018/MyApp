@@ -2,6 +2,7 @@ package com.yxx.app.util;
 
 import android.content.res.AssetManager;
 
+import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
 
 import java.io.IOException;
@@ -41,15 +42,16 @@ public class TemplateScheme {
     //擦除模板成功指令
     public static final byte ERASE_RXBUFFER = 0x03;
 
-    public static byte[] getStartDownloadTxBuffer(){
-        return new byte[]{2};
+    public void getStartDownloadCmd(){
+        byte[] bytes = new byte[]{2};
+        BluetoothManager.get().sendThread(bytes);
     }
 
-    public static byte getHandShakeTxBuffer(){
+    public static byte getHandShakeCmd(){
         return 0x7f;
     }
 
-    public static byte[] getSetBaudTxBuffer(byte arg){
+    public static byte[] getSetBaudCmd(byte arg){
         byte[] baudBytes = ByteUtil.int2BytesHib(BAUD);
         byte[] txBuffer = new byte[8];
         txBuffer[0] = 0x01;
@@ -63,7 +65,7 @@ public class TemplateScheme {
         return txBuffer;
     }
 
-    public static byte[] getEraseTxBuffer(){
+    public static byte[] getEraseCmd(){
         byte[] txBuffer = new byte[5];
         txBuffer[0] = 0x03;
         txBuffer[1] = 0x00;
