@@ -23,10 +23,19 @@ public class ByteUtil {
         return (byte)( (num << 24) >> 24 );
     }
 
+    //int 转 byte[] , 低位在前
     public static byte[] int2Bytes(int num)  {
         byte[] mybyte = new byte[2];
         mybyte[1] =(byte)( (num << 16) >> 24 );
         mybyte[0] =(byte)( (num << 24) >> 24 );
+        return mybyte;
+    }
+
+    //int 转 byte[] , 高位在前
+    public static byte[] int2BytesHib(int num)  {
+        byte[] mybyte = new byte[2];
+        mybyte[0] =(byte)( (num << 16) >> 24 );
+        mybyte[1] =(byte)( (num << 24) >> 24 );
         return mybyte;
     }
 
