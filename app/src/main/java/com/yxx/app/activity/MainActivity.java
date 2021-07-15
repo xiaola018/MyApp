@@ -99,7 +99,6 @@ public class MainActivity extends AppCompatActivity implements
         initViewPager();
 
         initListener();
-
     }
 
     private void findView() {
@@ -107,25 +106,6 @@ public class MainActivity extends AppCompatActivity implements
         mViewPager = findViewById(R.id.viewPager);
         mTabLayout = findViewById(R.id.tabLayout);
         ll_custom = findViewById(R.id.ll_custom);
-
-/*        String hex = "3B00";
-        byte[] bs = Hex.hexToByteArray(hex);
-        for(byte b : bs){
-            LogUtil.d(" == b == " + b);
-        }
-
-        String hexss = Hex.bytesToHex(bs);
-        LogUtil.d("hexss = " + hexss);
-        LogUtil.d(" num == " + Integer.parseInt("E057", 16));
-        LogUtil.d(" num == " + Integer.toHexString(Integer.parseInt("E057", 16)));*/
-
-
-    //    String numHex = Hex.decToHex(1);
-   //     LogUtil.d("== numHex== " + numHex);
-  //      byte[] numBytes = Hex.hexToByteArray(numHex);
-    ///    for(byte b : numBytes){
-    //        LogUtil.d( " == bbb=== " + Hex.bytesToHex(numBytes));
-   //     }
     }
 
     private void initView() {
@@ -307,6 +287,7 @@ public class MainActivity extends AppCompatActivity implements
                         toolbar.setTitle("已连接");
                         menuConnectView.showProgressBar(false);
                         inputFragment.sendBtnEnable(true);
+                        toolbar.setNavigationIcon(R.mipmap.ic_b_c);
                     }
                 });
             }
@@ -320,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements
                         toolbar.setTitle("未连接");
                         menuConnectView.showProgressBar(false);
                         inputFragment.sendBtnEnable(false);
+                        toolbar.setNavigationIcon(R.mipmap.ic_b_n);
                     }
                 });
             }
@@ -333,6 +315,17 @@ public class MainActivity extends AppCompatActivity implements
                         toolbar.setTitle("已断开");
                         menuConnectView.showProgressBar(false);
                         inputFragment.sendBtnEnable(false);
+                        toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+                    }
+                });
+            }
+
+            @Override
+            public void onSendFaile() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "发送失败", Toast.LENGTH_SHORT).show();
                     }
                 });
             }

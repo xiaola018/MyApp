@@ -4,10 +4,14 @@
     android:layout_height="wrap_content"
     android:background="@drawable/shape_radius_e1e1e1_8dp"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
     <TextView
         android:id="@+id/list1"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/ripple_e1e1e1_btn"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:gravity="center|start"
@@ -17,8 +21,11 @@
 
     <TextView
         android:id="@+id/list2"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:layout_width="match_parent"
         android:layout_height="40dp"
+        android:background="@drawable/ripple_e1e1e1_btn"
         android:gravity="center|start"
         android:text="更换城市"
         android:textColor="#000000"
@@ -26,9 +33,11 @@
 
     <LinearLayout
         android:id="@+id/list3"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:background="@drawable/ripple_btn"
+        android:background="@drawable/ripple_e1e1e1_btn"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -49,6 +58,9 @@
 
     <RelativeLayout
         android:id="@+id/list4"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/ripple_e1e1e1_btn"
         android:layout_width="match_parent"
         android:orientation="horizontal"
         android:layout_height="40dp">

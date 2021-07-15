@@ -23,12 +23,14 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import com.yxx.app.BluetoothManager;
 import com.yxx.app.R;
 import com.yxx.app.activity.MainActivity;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.MatcherUtil;
 import com.yxx.app.util.TimeUtil;
+import com.yxx.app.util.ToastUtil;
 
 import java.sql.Time;
 import java.util.Calendar;
@@ -158,32 +160,43 @@ public class InputFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.btn_add:
                 //添加到列表
-                String[] dateArray = tv_date_input.getText().toString().split("-");
-                String[] upTimeArray = tv_up_time_input.getText().toString().split(":");
-
-                SendInfo sendInfo = new SendInfo();
-                sendInfo.year = dateArray[0];
-                sendInfo.month = dateArray[1];
-                sendInfo.day = dateArray[2];
-
-                sendInfo.u_hours = upTimeArray[0];
-                sendInfo.u_minute = upTimeArray[1];
-
-                if(!isAtuoDownTime){
-                    String[] downTimeArray = tv_down_time_input.getText().toString().split(":");
-                    sendInfo.d_hours = downTimeArray[0];
-                    sendInfo.d_minute = downTimeArray[1];
-                }else{
-                    sendInfo.autoDownTime();
-                }
-                sendInfo.price = editText.getText().toString();
-
+                SendInfo sendInfo = getSendInfo();
                 MainActivity activity = (MainActivity) getActivity();
                 if(activity != null){
                     activity.importData(sendInfo);
                 }
                 break;
+            case R.id.btn_send:
+                if(editText.getText().length() == 0){
+                    ToastUtil.show("清输入正确的数据");
+                    return;
+                }
+                BluetoothManager.get().sendData(getSendInfo());
+                break;
         }
+    }
+
+    private SendInfo getSendInfo(){
+        String[] dateArray = tv_date_input.getText().toString().split("-");
+        String[] upTimeArray = tv_up_time_input.getText().toString().split(":");
+
+        SendInfo sendInfo = new SendInfo();
+        sendInfo.year = dateArray[0];
+        sendInfo.month = dateArray[1];
+        sendInfo.day = dateArray[2];
+
+        sendInfo.u_hours = upTimeArray[0];
+        sendInfo.u_minute = upTimeArray[1];
+
+        if(!isAtuoDownTime){
+            String[] downTimeArray = tv_down_time_input.getText().toString().split(":");
+            sendInfo.d_hours = downTimeArray[0];
+            sendInfo.d_minute = downTimeArray[1];
+        }else{
+            sendInfo.autoDownTime();
+        }
+        sendInfo.price = editText.getText().toString();
+        return sendInfo;
     }
     //</editor-fold>
 }

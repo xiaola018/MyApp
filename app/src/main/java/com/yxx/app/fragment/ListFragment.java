@@ -114,6 +114,7 @@ public class ListFragment extends Fragment implements View.OnClickListener {
 
     private void saveCacheData(){
         if(mAdapter != null){
+            setNumPrice();
             //保存数据
             String jsonStr = JsonUtils.toJson(mAdapter.getData());
             SPUtil.putString(SPUtil.CACHE_DATA_LIST, jsonStr);
@@ -301,7 +302,7 @@ public class ListFragment extends Fragment implements View.OnClickListener {
                 iv_send.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-
+                        BluetoothManager.get().sendData(getData().get(getLayoutPosition()));
                     }
                 });
             }

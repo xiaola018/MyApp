@@ -2,6 +2,8 @@ package com.yxx.app.activity;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -30,6 +32,8 @@ import com.yxx.app.bean.ProInfo;
 import com.yxx.app.dialog.NeverMenuPopup;
 import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
+import com.yxx.app.util.SPUtil;
+import com.yxx.app.util.TemplateScheme;
 import com.yxx.app.view.MenuConnectView;
 
 import java.io.BufferedReader;
@@ -51,7 +55,8 @@ import io.reactivex.schedulers.Schedulers;
  * Date: 2021/7/12 16:49
  * Description:     更换城市
  */
-public class ReplaceCityActivity extends AppCompatActivity {
+public class ReplaceCityActivity extends AppCompatActivity implements
+        View.OnClickListener, TemplateScheme.OnTemplateDownCallback {
 
     /**
      * 自定义数据源-省份数据
@@ -63,6 +68,8 @@ public class ReplaceCityActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private Button btn_replace;
 
+    private MyHandler mHandler = new MyHandler();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +80,7 @@ public class ReplaceCityActivity extends AppCompatActivity {
         readJsonText();
     }
 
-    private void initView(){
+    private void initView() {
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         proWheelView = findViewById(R.id.proWheelView);
@@ -82,22 +89,69 @@ public class ReplaceCityActivity extends AppCompatActivity {
         cityWheelView = findViewById(R.id.cityWheelView);
         btn_replace = findViewById(R.id.btn_replace);
 
+        toolbar.setNavigationOnClickListener(view -> finish());
 
-        proWheelView.addChangingListener(new OnWheelChangedListener() {
-            @Override
-            public void onChanged(WheelView wheel, int oldValue, int newValue) {
-                updateCities();
-            }
-        });
+        proWheelView.addChangingListener((wheel, oldValue, newValue) -> updateCities());
 
-        btn_replace.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                CustomCityData proData = mProvinceListData.get(proWheelView.getCurrentItem());
-                LogUtil.d(" 省份 : " + proData.getName());
-                LogUtil.d(" 城市 : " + proData.getList().get(cityWheelView.getCurrentItem()));
+        btn_replace.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View view) {
+        CustomCityData proData = mProvinceListData.get(proWheelView.getCurrentItem());
+        String proName = proData.getName();
+        String cityName = proData.getList().get(cityWheelView.getCurrentItem()).getName();
+        LogUtil.d(" 省份 : " + proName);
+        LogUtil.d(" 城市 : " + cityName);
+
+        SPUtil.setCheckedProvince(proName);
+        SPUtil.setCheckedCity(cityName);
+
+        new TemplateScheme().sendTemplateData("bin/JYG_TEST_DATA.bin", this);
+    }
+
+    @Override
+    public void onTemplateDownStart() {
+        mHandler.sendEmptyMessage(0);
+    }
+
+    @Override
+    public void onTemplateDownProgress(int progress) {
+        Message message = new Message();
+        message.obj = progress;
+        message.what = 1;
+        mHandler.sendMessage(message);
+    }
+
+    @Override
+    public void onTemplateDownFinish() {
+        mHandler.sendEmptyMessage(2);
+    }
+
+    @Override
+    public void onTemplateDownFail(int code, String msg) {
+
+    }
+
+    private class MyHandler extends Handler {
+        @Override
+        public void handleMessage(@androidx.annotation.NonNull Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 0:
+                    btn_replace.setText("0%");
+                    btn_replace.setEnabled(false);
+                    break;
+                case 2:
+                    btn_replace.setText("更 换");
+                    btn_replace.setEnabled(true);
+                    break;
+                case 1:
+                    int progress = Integer.parseInt(msg.obj.toString());
+                    btn_replace.setText(String.format("%s%s", progress, "%"));
+                    break;
             }
-        });
+        }
     }
 
     /**
@@ -117,10 +171,10 @@ public class ReplaceCityActivity extends AppCompatActivity {
                     }
                     List<ProInfo> proInfoList = JsonUtils.fromJsonArray(stringBuffer.toString(), ProInfo.class);
 
-                    for(ProInfo proInfo : proInfoList){
+                    for (ProInfo proInfo : proInfoList) {
                         CustomCityData pro = new CustomCityData(proInfo.getId(), proInfo.getName());
                         List<CustomCityData> cityList = new ArrayList<>();
-                        for(ProInfo cityInfo : proInfo.getCities()){
+                        for (ProInfo cityInfo : proInfo.getCities()) {
                             CustomCityData city = new CustomCityData(cityInfo.getId(), cityInfo.getName());
                             cityList.add(city);
                         }
@@ -159,7 +213,7 @@ public class ReplaceCityActivity extends AppCompatActivity {
                 });
     }
 
-    private void  updatePro(){
+    private void updatePro() {
         ArrayWheelAdapter arrayWheelAdapter = new ArrayWheelAdapter<CustomCityData>(this, mProvinceListData);
         //自定义item
 /*        if (config.getCustomItemLayout() != CityConfig.NONE && config.getCustomItemTextViewId() != CityConfig.NONE) {
@@ -170,7 +224,18 @@ public class ReplaceCityActivity extends AppCompatActivity {
             arrayWheelAdapter.setItemTextResource(R.id.default_item_city_name_tv);
         }*/
         proWheelView.setViewAdapter(arrayWheelAdapter);
-        proWheelView.setCurrentItem(0);
+        //获取上一次选中的省份
+        String proName = SPUtil.getCheckedProvince();
+        if (!TextUtils.isEmpty(proName)) {
+            for (int i = 0; i < mProvinceListData.size(); i++) {
+                if(proName.equals(mProvinceListData.get(i).getName())){
+                    proWheelView.setCurrentItem(i);
+                    break;
+                }
+            }
+        } else {
+            proWheelView.setCurrentItem(0);
+        }
         proWheelView.setVisibleItems(5);
         proWheelView.setCyclic(false);
 
@@ -216,14 +281,20 @@ public class ReplaceCityActivity extends AppCompatActivity {
 
         cityWheelView.setCyclic(false);
         cityWheelView.setViewAdapter(cityWheel);
-        cityWheelView.setCurrentItem(0);
         cityWheelView.setVisibleItems(5);
-/*        if (-1 != cityDefault) {
-            mViewCity.setCurrentItem(cityDefault);
-        } else {
-            mViewCity.setCurrentItem(0);
-        }*/
 
+        //获取上一次选中的城市
+        String cityName = SPUtil.getCheckedProvince();
+        if (!TextUtils.isEmpty(cityName)) {
+            for (int i = 0; i < pCityList.size(); i++) {
+                if(cityName.equals(pCityList.get(i).getName())){
+                    cityWheelView.setCurrentItem(i);
+                    break;
+                }
+            }
+        } else {
+            cityWheelView.setCurrentItem(0);
+        }
 
         cityWheelView.setViewAdapter(cityWheel);
 

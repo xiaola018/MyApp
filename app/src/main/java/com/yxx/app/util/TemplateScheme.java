@@ -5,6 +5,7 @@ import android.content.res.AssetManager;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -75,18 +76,60 @@ public class TemplateScheme {
         return txBuffer;
     }
 
-    public void sendTemplateData(String fileName){
-        byte[] txBuffer = new byte[5];
-        txBuffer[0] = 0x22;
-        txBuffer[3] = 0x5a;
-        txBuffer[4] = (byte) 0xa5;
-        AssetManager manager = MyApplication.getInstance().getResources().getAssets();
-        try {
-            InputStream inputStream = manager.open(fileName);
-            //总长度
-            int length = inputStream.available();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void sendTemplateData(String fileName, OnTemplateDownCallback callback){
+        callback.onTemplateDownStart();
+        MyThread myThread = new MyThread(fileName, callback);
+        myThread.start();
+    }
+
+    private static class MyThread extends Thread{
+
+        private String fileName;
+        private OnTemplateDownCallback callback;
+
+        public MyThread(String fileName,OnTemplateDownCallback callback) {
+            this.fileName = fileName;
+            this.callback = callback;
         }
+
+        @Override
+        public void run() {
+            byte[] txBuffer = new byte[5];
+            txBuffer[0] = 0x22;
+            txBuffer[3] = 0x5a;
+            txBuffer[4] = (byte) 0xa5;
+            AssetManager manager = MyApplication.getInstance().getResources().getAssets();
+            try {
+                InputStream inputStream = manager.open(fileName);
+                LogUtil.d("开始读取文件");
+                //总长度
+                int length = inputStream.available();
+                byte[] tempbytes = new byte[128];
+                int len;
+                int progress = 0;
+                BufferedInputStream in = new BufferedInputStream(inputStream);
+                while ((len = in.read(tempbytes)) != -1){
+                    progress += len;
+                    callback.onTemplateDownProgress((progress * 100 / length));
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                callback.onTemplateDownFail(0,"");
+            } finally {
+                callback.onTemplateDownFinish();
+            }
+        }
+    }
+
+    public interface OnTemplateDownCallback{
+        void onTemplateDownStart();
+        void onTemplateDownProgress(int progress);
+        void onTemplateDownFinish();
+        void onTemplateDownFail(int code, String msg);
     }
 }
