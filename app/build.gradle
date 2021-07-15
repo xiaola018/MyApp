@@ -6,6 +6,27 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
 
+    signingConfigs {
+        release {
+/*            storeFile file('G:\\demo\\MyApp\\app\\kestore\\my.jks')
+            storePassword '748596'
+            keyAlias 'myapp'
+            keyPassword '968574'*/
+            try {
+                storeFile file("./keystore/my.jks")
+                storePassword "748596"
+                keyAlias "myapp"
+                keyPassword "968574"
+            } catch (ex) {
+                ex.printStackTrace()
+            }
+        }
+
+        debug {
+            storeFile file("./keystore/my.jks")
+        }
+    }
+
     defaultConfig {
         applicationId "com.yxx.app"
         minSdkVersion 21
@@ -19,6 +40,12 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
