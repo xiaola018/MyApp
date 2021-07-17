@@ -52,6 +52,7 @@ import com.yxx.app.fragment.ListFragment;
 import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
+import com.yxx.app.util.ToastUtil;
 import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
@@ -321,11 +322,25 @@ public class MainActivity extends AppCompatActivity implements
             }
 
             @Override
-            public void onSendFaile() {
+            public void onSendSuccess(int code) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this, "发送失败", Toast.LENGTH_SHORT).show();
+                        if(code == BluetoothManager.CODE_PRINT){
+                            ToastUtil.show("发送成功");
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onSendFaile(int code, String msg) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(code == BluetoothManager.CODE_PRINT){
+                            ToastUtil.show("发送成功");
+                        }
                     }
                 });
             }

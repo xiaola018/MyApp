@@ -48,6 +48,26 @@ import java.util.concurrent.Executors;
  */
 public class BluetoothManager {
 
+    //下发票据打印
+    public static final int CODE_PRINT = 1001;
+
+    //下发开始下载模板
+    public static final int CODE_START_DOWNLOAD = 1002;
+
+    //下发握手
+    public static final int CODE_HANDSHAKE = 1003;
+
+    //下发设置波特率
+    public static final int CODE_SET_BAUD = 1004;
+
+    //下发擦除
+    public static final int CODE_ERASE = 1005;
+
+    //下发模板数据
+    public static final int CODE_TEMPLATE_DATA = 1006;
+
+    //下发准备下载
+    public static final int CODE_READY_DOWNLOAD = 1007;
 
     //蓝牙的特征值，发送
     private final static String SERVICE_EIGENVALUE_SEND = "0000ffe1-0000-1000-8000-00805f9b34fb";
@@ -72,6 +92,10 @@ public class BluetoothManager {
     private boolean isConnect;
 
     private int separateLength;//分包的长度
+    private int sendCount;//数据需要发送几次
+    private int currentSendCount;//当前发送第几次数据
+
+    private int readCode;//当前接收哪一步的数据
 
     private TemplateScheme mTemplateScheme;//下载协议
 
@@ -113,6 +137,10 @@ public class BluetoothManager {
 
     public boolean isOpen() {
         return isSupport() && mBluetoothAdapter.isEnabled();
+    }
+
+    public void setReadCode(int readCode) {
+        this.readCode = readCode;
     }
 
     private void startReceiver() {
@@ -282,6 +310,12 @@ public class BluetoothManager {
                     LogUtil.d("所有app发送给模块数据成功的回调都在这里");
                     //    sendHandler(BleBluetoothManage.SERVICE_SEND_DATA_NUMBER, String.valueOf(characteristic.getValue().length));
                     sendDataSign = true;//等到发送数据回调成功才可以继续发送
+                    if(sendCount == currentSendCount){
+                        //数据发送成功了
+                        onBluetoothListener.onSendSuccess(readCode);
+                        if(mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
+                            mTemplateScheme.getDownCallback().onTemplateDownFinish(readCode);
+                    }
                 }
             }
 
@@ -395,7 +429,11 @@ public class BluetoothManager {
         //根据长度获取分包后的数据
         List<byte[]> sendDataArray = ByteUtil.getSendDataByte(buff, separateLength);
         int number = 0;
+        sendCount = 0;
+        currentSendCount = 0;
+        sendCount = sendDataArray.size();
         for (byte[] sendData : sendDataArray) {
+            currentSendCount++;
             try {
                 Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
                 mNeedCharacteristic.setValue(sendData);
@@ -403,7 +441,8 @@ public class BluetoothManager {
                 if (sendDataSign) {
                     Thread.sleep(1000 + 500 * ModuleParameters.getState());
                     LogUtil.d("发送失败....");
-                    onBluetoothListener.onSendFaile();
+                    onBluetoothListener.onSendFaile(readCode, "");
+                    if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onTemplateDownFail(readCode,"");
                     sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
                     if (sendDataSign) {
                         LogUtil.d("无法发送数据");
@@ -432,7 +471,8 @@ public class BluetoothManager {
 
                     if (number == 300) {
                         sendDataSign = true;
-                        onBluetoothListener.onSendFaile();
+                        onBluetoothListener.onSendFaile(readCode,"");
+                        if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onTemplateDownFail(readCode,"");
                         LogUtil.d("发送失败,关闭线程");
                         return;
                     }
@@ -442,7 +482,6 @@ public class BluetoothManager {
                 e.printStackTrace();
             }
         }
-
     }
 
     /**
@@ -480,7 +519,7 @@ public class BluetoothManager {
             Toast.makeText(MyApplication.getInstance(), "蓝牙未连接", Toast.LENGTH_LONG).show();
             return;
         }
-
+        this.readCode = CODE_PRINT;
         //获取梳理好的字节数据，准备组装发送
         byte[] sendByteArray = ByteUtil.combData(infoList);
         sendThread(sendByteArray);
@@ -489,14 +528,14 @@ public class BluetoothManager {
 
     /**
      *  开启模板数据下载协议
-     * @param fileName  读取的二进制文件
      */
-    public void templateDownload(String fileName){
-        mTemplateScheme = new TemplateScheme();
-        //发送下载指令
-    //    sendThread(mTemplateScheme.getStartDownloadCmd());
+    public void templateDownload(TemplateScheme templateScheme){
+        mTemplateScheme = templateScheme;
     }
 
+    private boolean templateCallbackIsNull(){
+        return mTemplateScheme != null && mTemplateScheme.getDownCallback() != null;
+    }
 
     //<editor-fold desc="监听回调">
     public interface OnBluetoothListener {
@@ -522,7 +561,9 @@ public class BluetoothManager {
 
         void onStateDisconnected();
 
-        void onSendFaile();
+        void onSendSuccess(int code);
+
+        void onSendFaile(int code, String msg);
     }
     //</editor-fold>
 }

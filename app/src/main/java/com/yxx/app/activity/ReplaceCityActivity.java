@@ -34,6 +34,7 @@ import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
 import com.yxx.app.util.TemplateScheme;
+import com.yxx.app.util.ToastUtil;
 import com.yxx.app.view.MenuConnectView;
 
 import java.io.BufferedReader;
@@ -107,7 +108,7 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         SPUtil.setCheckedProvince(proName);
         SPUtil.setCheckedCity(cityName);
 
-        new TemplateScheme().sendTemplateData("bin/JYG_TEST_DATA.bin", this);
+        new TemplateScheme("bin/JYG_TEST_DATA.bin",this).sendStartDownloadCmd();
     }
 
     @Override
@@ -118,19 +119,26 @@ public class ReplaceCityActivity extends AppCompatActivity implements
     @Override
     public void onTemplateDownProgress(int progress) {
         Message message = new Message();
-        message.obj = progress;
+        message.arg1 = progress;
         message.what = 1;
         mHandler.sendMessage(message);
     }
 
     @Override
-    public void onTemplateDownFinish() {
-        mHandler.sendEmptyMessage(2);
+    public void onTemplateDownFinish(int code) {
+        Message msg = new Message();
+        msg.arg1 = code;
+        msg.what = 2;
+        mHandler.sendMessage(msg);
     }
 
     @Override
     public void onTemplateDownFail(int code, String msg) {
-
+        Message message = new Message();
+        message.arg1 = code;
+        message.obj = msg;
+        message.what = 3;
+        mHandler.sendMessage(message);
     }
 
     private class MyHandler extends Handler {
@@ -145,10 +153,16 @@ public class ReplaceCityActivity extends AppCompatActivity implements
                 case 2:
                     btn_replace.setText("更 换");
                     btn_replace.setEnabled(true);
+                    ToastUtil.show("更换成功");
                     break;
                 case 1:
-                    int progress = Integer.parseInt(msg.obj.toString());
+                    int progress = msg.arg1;
                     btn_replace.setText(String.format("%s%s", progress, "%"));
+                    break;
+                case 3:
+                    int code = msg.arg1;
+                    String text = msg.obj.toString();
+                    ToastUtil.show(String.format("数据发送错误，错误码：%s", code));
                     break;
             }
         }
