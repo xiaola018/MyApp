@@ -313,11 +313,14 @@ public class BluetoothManager {
                     LogUtil.d("发送模块数据成功");
                     //    sendHandler(BleBluetoothManage.SERVICE_SEND_DATA_NUMBER, String.valueOf(characteristic.getValue().length));
                     sendDataSign = true;//等到发送数据回调成功才可以继续发送
-                    if(sendCount == currentSendCount){
+                    if (sendCount == currentSendCount) {
                         //数据发送成功了
                         onBluetoothListener.onSendSuccess(readCode);
-                     //   if(mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
-                    //        mTemplateScheme.getDownCallback().onTemplateDownFinish(readCode);
+                        //    if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onSendSuccess(readCode);
+                        if (readCode == CODE_START_DOWNLOAD) {
+                            if (mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
+                                mTemplateScheme.read(new byte[]{0,1},readCode);
+                        }
                     }
                 }
             }
@@ -392,17 +395,18 @@ public class BluetoothManager {
                                                 BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
                 //蓝牙发送给app的回调
-                LogUtil.d("接收到数据回调 = " + Arrays.toString(characteristic.getValue()));
+
                 try {
-                    LogUtil.d("数据是：" + new String(characteristic.getValue(), 0, characteristic.getValue().length, "GB2312"));
-                    LogUtil.d("数据是：" + Hex.bytesToHex(characteristic.getValue()));
-                } catch (UnsupportedEncodingException e) {
+                    //    LogUtil.d("数据是：" + new String(characteristic.getValue(), 0, characteristic.getValue().length, "GB2312"));
+                    LogUtil.d("接收到数据回调 readCode = " + readCode);
+                    LogUtil.d("接收到数据回调 str = " + Arrays.toString(characteristic.getValue()));
+                    LogUtil.d("接收到数据回调 Hex = " + Hex.bytesToHex(characteristic.getValue()));
+                    if (mTemplateScheme != null) {
+                        mTemplateScheme.read(characteristic.getValue(), readCode);
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-                if(mTemplateScheme != null){
-                    mTemplateScheme.read(characteristic.getValue(), readCode);
-                }
-                //    sendHandler( characteristic.getValue().clone());//再转码后发送给handler更新UI
             }
 
             @Override
@@ -428,8 +432,9 @@ public class BluetoothManager {
     //<editor-fold desc="发送数据到模块">
 
     /**
-     *  不开启新线程发送
-     * @param buff   发送到模板的数据
+     * 不开启新线程发送
+     *
+     * @param buff 发送到模板的数据
      */
     public void sendByte(byte[] buff) {
         LogUtil.d("进入发送方法, 数据总长度 == " + buff.length);
@@ -449,7 +454,8 @@ public class BluetoothManager {
                     Thread.sleep(1000 + 500 * ModuleParameters.getState());
                     LogUtil.d("发送失败....");
                     onBluetoothListener.onSendFaile(readCode, "");
-                    if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onTemplateDownFail(readCode,"");
+                    if (templateCallbackIsNull())
+                        mTemplateScheme.getDownCallback().onTemplateDownFail(readCode, "");
                     sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);
                     if (sendDataSign) {
                         LogUtil.d("无法发送数据");
@@ -478,8 +484,9 @@ public class BluetoothManager {
 
                     if (number == 300) {
                         sendDataSign = true;
-                        onBluetoothListener.onSendFaile(readCode,"");
-                        if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onTemplateDownFail(readCode,"");
+                        onBluetoothListener.onSendFaile(readCode, "");
+                        if (templateCallbackIsNull())
+                            mTemplateScheme.getDownCallback().onTemplateDownFail(readCode, "");
                         LogUtil.d("发送失败,关闭线程");
                         return;
                     }
@@ -492,10 +499,11 @@ public class BluetoothManager {
     }
 
     /**
-     *  开启新线程发送
-     * @param buff  发送到模板的数据
+     * 开启新线程发送
+     *
+     * @param buff 发送到模板的数据
      */
-    public void sendThread(byte[] buff){
+    public void sendThread(byte[] buff) {
 
         Runnable runnable = new Runnable() {
             @Override
@@ -507,7 +515,8 @@ public class BluetoothManager {
     }
 
     /**
-     *  发送单条打印数据
+     * 发送单条打印数据
+     *
      * @param sendInfo
      */
     public void sendData(SendInfo sendInfo) {
@@ -534,13 +543,13 @@ public class BluetoothManager {
     //</editor-fold>
 
     /**
-     *  开启模板数据下载协议
+     * 开启模板数据下载协议
      */
-    public void templateDownload(TemplateScheme templateScheme){
+    public void setTemplateScheme(TemplateScheme templateScheme) {
         mTemplateScheme = templateScheme;
     }
 
-    private boolean templateCallbackIsNull(){
+    private boolean templateCallbackIsNull() {
         return mTemplateScheme != null && mTemplateScheme.getDownCallback() != null;
     }
 

@@ -1,9 +1,13 @@
 package com.yxx.app.util;
 
 import android.content.res.AssetManager;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
+
+import org.w3c.dom.ls.LSOutput;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -26,19 +30,19 @@ public class TemplateScheme {
 
     private int readLength = 1;//从文件读取了多少长度
 
-/*    public static void start(String fileName, OnTemplateDownCallback downCallback) {
-        TemplateScheme mTemplateScheme = new TemplateScheme(fileName, downCallback);
-        BluetoothManager.get().templateDownload(mTemplateScheme);
-        //下发开始下载模板
-        mTemplateScheme.sendStartDownloadCmd();
-    }*/
+    private BluetoothManager bluetoothManager;
 
     private String fileName;
     private OnTemplateDownCallback downCallback;
+    private int sendCount;
+
+    private Handler timeHandler = new Handler(Looper.getMainLooper());
 
     public TemplateScheme(String fileName, OnTemplateDownCallback downCallback) {
         this.fileName = fileName;
         this.downCallback = downCallback;
+        bluetoothManager = BluetoothManager.get();
+        bluetoothManager.setTemplateScheme(this);
     }
 
     public void setDownCallback(OnTemplateDownCallback downCallback) {
@@ -53,18 +57,27 @@ public class TemplateScheme {
      * 发送下载模板开始指令
      */
     public void sendStartDownloadCmd() {
-        byte[] bytes = new byte[]{2};
-        BluetoothManager.get().setReadCode(BluetoothManager.CODE_START_DOWNLOAD);
-        BluetoothManager.get().sendThread(bytes);
+        byte[] bytes = new byte[8];
+        bytes[0] = (byte) 0xA0;
+        bytes[1] = (byte) 0xA0;
+        bytes[2] = (byte) 0xFC;
+        bytes[3] = 0x01;
+        bytes[4] = 0x00;
+        bytes[5] = (byte) 0xfb;
+        bytes[6] = 0x0a;
+        bytes[7] = 0x0a;
+        bluetoothManager.setReadCode(BluetoothManager.CODE_START_DOWNLOAD);
+        bluetoothManager.sendThread(bytes);
     }
 
     /**
      * 发送握手指令
      */
     public void sendHandShakeCmd() {
-        byte[] bytes = new byte[0x7f];
-        BluetoothManager.get().setReadCode(BluetoothManager.CODE_HANDSHAKE);
-        BluetoothManager.get().sendThread(bytes);
+        byte[] bytes = new byte[]{0x7f};
+        LogUtil.d("发送握手指令：" + bytes.length);
+        bluetoothManager.setReadCode(BluetoothManager.CODE_HANDSHAKE);
+        bluetoothManager.sendThread(bytes);
     }
 
     /**
@@ -81,8 +94,8 @@ public class TemplateScheme {
         txBuffer[5] = 0x00;
         txBuffer[6] = 0x00;
         txBuffer[7] = (byte) 0x97;
-        BluetoothManager.get().setReadCode(BluetoothManager.CODE_SET_BAUD);
-        BluetoothManager.get().sendThread(txBuffer);
+        bluetoothManager.setReadCode(BluetoothManager.CODE_SET_BAUD);
+        bluetoothManager.sendThread(txBuffer);
     }
 
     /**
@@ -95,8 +108,8 @@ public class TemplateScheme {
         txBuffer[2] = 0x00;
         txBuffer[3] = 0x5a;
         txBuffer[4] = (byte) 0xa5;
-        BluetoothManager.get().setReadCode(BluetoothManager.CODE_READY_DOWNLOAD);
-        BluetoothManager.get().sendThread(txBuffer);
+        bluetoothManager.setReadCode(BluetoothManager.CODE_READY_DOWNLOAD);
+        bluetoothManager.sendThread(txBuffer);
     }
 
     /**
@@ -109,8 +122,8 @@ public class TemplateScheme {
         txBuffer[2] = 0x00;
         txBuffer[3] = 0x5a;
         txBuffer[4] = (byte) 0xa5;
-        BluetoothManager.get().setReadCode(BluetoothManager.CODE_ERASE);
-        BluetoothManager.get().sendThread(txBuffer);
+        bluetoothManager.setReadCode(BluetoothManager.CODE_ERASE);
+        bluetoothManager.sendThread(txBuffer);
     }
 
     public void sendTemplateData() {
@@ -134,12 +147,15 @@ public class TemplateScheme {
                 inputStream = manager.open(fileName);
                 //总长度
                 fileLength = inputStream.available();
+                LogUtil.d("模板文件总长度：" + fileLength);
                 inputStream.skip(readLength - 1);
 
                 byte[] tempbytes = new byte[128];
                 int len;
                 bufferedInputStream = new BufferedInputStream(inputStream);
                 if ((len = bufferedInputStream.read(tempbytes)) != -1) {
+                    sendCount++;
+                    LogUtil.d(String.format("发送模板数据第%s次",sendCount));
                     readLength += len;
                     downCallback.onTemplateDownProgress((readLength * 100 / fileLength));
                     byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
@@ -149,27 +165,28 @@ public class TemplateScheme {
                     System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
                     System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, tempbytes.length);
 
-                //    LogUtil.d("读取的数据 : " + Arrays.toString(tempbytes));
-                //    sendTemplateData();
+                    //    LogUtil.d("读取的数据 : " + Arrays.toString(tempbytes));
+                    //    sendTemplateData();
 
-                    BluetoothManager.get().setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
-                    BluetoothManager.get().sendThread(sendBytes);
+                    bluetoothManager.setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
+                    bluetoothManager.sendThread(sendBytes);
                 } else {
                     //已经读取完了
                     LogUtil.d("已经读取完啦");
                     downCallback.onTemplateDownFinish(BluetoothManager.CODE_TEMPLATE_DATA);
+                    bluetoothManager.setTemplateScheme(null);
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
                 downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
             } finally {
-                    try {
-                        if(inputStream != null)inputStream.close();
-                        if(bufferedInputStream != null)bufferedInputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    if (inputStream != null) inputStream.close();
+                    if (bufferedInputStream != null) bufferedInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -187,8 +204,14 @@ public class TemplateScheme {
         }
         switch (code) {
             case BluetoothManager.CODE_START_DOWNLOAD://下发模板指令回传
-                //下发握手指令
-                sendHandShakeCmd();
+                timeHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //下发握手指令
+                        sendHandShakeCmd();
+                    }
+                },150);
+
                 break;
             case BluetoothManager.CODE_HANDSHAKE://握手回传
                 if (bytes.length >= 5) {
@@ -207,8 +230,8 @@ public class TemplateScheme {
                 break;
             case BluetoothManager.CODE_SET_BAUD://设置波特率回传
                 if (bytes.length >= 1 && bytes[0] == 0x01) {
-                    //设置波特率成功,擦除芯片
-                    sendEraseCmd();
+                    //设置波特率成功,准备下载
+                    sendReadyDownloadCmd();
                 } else {
                     //设置失败
                     downCallback.onTemplateDownFail(BluetoothManager.CODE_SET_BAUD, "");
@@ -216,8 +239,8 @@ public class TemplateScheme {
                 break;
             case BluetoothManager.CODE_READY_DOWNLOAD://准备下载回传
                 if (bytes.length >= 1 && bytes[0] == 0x05) {
-                    //成功
-                    sendTemplateData();
+                    //准备下载回调成功。 擦除芯片指令
+                    sendEraseCmd();
                 } else {
                     //失败
                     downCallback.onTemplateDownFail(BluetoothManager.CODE_READY_DOWNLOAD, "");
@@ -226,7 +249,7 @@ public class TemplateScheme {
             case BluetoothManager.CODE_ERASE://擦除回传
                 if (bytes.length >= 1 && bytes[0] == 0x03) {
                     //擦除成功
-                    sendReadyDownloadCmd();
+                    sendTemplateData();
                 } else {
                     //擦除失败
                     downCallback.onTemplateDownFail(BluetoothManager.CODE_ERASE, "");
@@ -240,6 +263,7 @@ public class TemplateScheme {
                     //模板数据下发失败
                     downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
                 }
+                sendTemplateData();
                 break;
         }
     }
@@ -248,6 +272,8 @@ public class TemplateScheme {
         void onTemplateDownStart();
 
         void onTemplateDownProgress(int progress);
+
+        void onSendSuccess(int code);
 
         void onTemplateDownFinish(int code);
 

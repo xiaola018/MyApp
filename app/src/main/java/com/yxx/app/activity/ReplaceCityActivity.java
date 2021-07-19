@@ -116,7 +116,7 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
         onTemplateDownStart();
         TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA.bin",this);
-        templateScheme.sendTemplateData();
+        templateScheme.sendStartDownloadCmd();
     }
 
     @Override
@@ -133,6 +133,11 @@ public class ReplaceCityActivity extends AppCompatActivity implements
     }
 
     @Override
+    public void onSendSuccess(int code) {
+
+    }
+
+    @Override
     public void onTemplateDownFinish(int code) {
         Message msg = new Message();
         msg.arg1 = code;
@@ -142,11 +147,13 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
     @Override
     public void onTemplateDownFail(int code, String msg) {
-        Message message = new Message();
-        message.arg1 = code;
-        message.obj = msg;
-        message.what = 3;
-        mHandler.sendMessage(message);
+        if(code != BluetoothManager.CODE_PRINT){
+            Message message = new Message();
+            message.arg1 = code;
+            message.obj = msg;
+            message.what = 3;
+            mHandler.sendMessage(message);
+        }
     }
 
     private class MyHandler extends Handler {

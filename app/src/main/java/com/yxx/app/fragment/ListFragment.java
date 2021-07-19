@@ -49,6 +49,7 @@ public class ListFragment extends Fragment implements View.OnClickListener {
 
     private SendDataAdapter mAdapter;
 
+    private int PRINT_MAX_LENGTH = 50;//一次最多打印多少条数据
     private int currentStatus;//当前状态， 0（复制，编辑）， 1 （完成，清空）
 
     @Nullable
@@ -107,9 +108,18 @@ public class ListFragment extends Fragment implements View.OnClickListener {
         if(data != null && data.size() > 0 && tv_edit.getVisibility() == View.INVISIBLE){
             showEditTextView(true);
         }
-        mAdapter.add(data);
-        saveCacheData();
-        setNumPrice();
+        if(mAdapter.getItemCount() < PRINT_MAX_LENGTH){
+            int size = PRINT_MAX_LENGTH - mAdapter.getItemCount();
+            if(data != null){
+                if(size > data.size()){
+                    mAdapter.add(data);
+                }else{
+                    mAdapter.add(data.subList(0,size));
+                }
+                saveCacheData();
+                setNumPrice();
+            }
+        }
     }
 
     private void saveCacheData(){

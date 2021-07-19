@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="生成张数"
+            android:text="每日张数"
             android:textSize="22sp" />
 
         <EditText
@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:background="@color/color_e1e1e1"
             android:gravity="center"
-            android:hint="1-100"
+            android:hint="1-50"
             android:inputType="number"
             android:textColor="@color/color_333333"
             android:textSize="22sp" />
