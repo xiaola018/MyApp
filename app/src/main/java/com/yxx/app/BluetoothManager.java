@@ -189,7 +189,6 @@ public class BluetoothManager {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            LogUtil.d("有回调=== action -=== " + action);
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
                 LogUtil.d("state = " + state);
@@ -307,14 +306,14 @@ public class BluetoothManager {
                 LogUtil.d("onCharacteristicWrite");
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     //所有app发送给模块数据成功的回调都在这里
-                    LogUtil.d("所有app发送给模块数据成功的回调都在这里");
+                    LogUtil.d("发送模块数据成功");
                     //    sendHandler(BleBluetoothManage.SERVICE_SEND_DATA_NUMBER, String.valueOf(characteristic.getValue().length));
                     sendDataSign = true;//等到发送数据回调成功才可以继续发送
                     if(sendCount == currentSendCount){
                         //数据发送成功了
                         onBluetoothListener.onSendSuccess(readCode);
-                        if(mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
-                            mTemplateScheme.getDownCallback().onTemplateDownFinish(readCode);
+                     //   if(mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
+                    //        mTemplateScheme.getDownCallback().onTemplateDownFinish(readCode);
                     }
                 }
             }
@@ -392,8 +391,12 @@ public class BluetoothManager {
                 LogUtil.d("接收到数据回调 = " + Arrays.toString(characteristic.getValue()));
                 try {
                     LogUtil.d("数据是：" + new String(characteristic.getValue(), 0, characteristic.getValue().length, "GB2312"));
+                    LogUtil.d("数据是：" + Hex.bytesToHex(characteristic.getValue()));
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
+                }
+                if(mTemplateScheme != null){
+                    mTemplateScheme.read(characteristic.getValue(), readCode);
                 }
                 //    sendHandler( characteristic.getValue().clone());//再转码后发送给handler更新UI
             }
@@ -437,7 +440,7 @@ public class BluetoothManager {
             try {
                 Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
                 mNeedCharacteristic.setValue(sendData);
-                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据，一次顶多20字节
+                sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据
                 if (sendDataSign) {
                     Thread.sleep(1000 + 500 * ModuleParameters.getState());
                     LogUtil.d("发送失败....");

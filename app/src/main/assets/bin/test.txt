@@ -1,0 +1,20 @@
+用于对Observable发射的 onError 通知做出响应或者从错误中恢复，例如，你
+可以：
+
+吞掉这个错误，切换到一个备用的Observable继续发射数据
+吞掉这个错误然后发射默认值
+吞掉这个错误并立即尝试重启这个Observable
+吞掉这个错误，在一些回退间隔后重启这个Observable
+
+作者：三也视界
+链接：https://www.jianshu.com/p/f54f32b39b7c
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+(rxjava-computation-expressions): 表示这个操作符当前是可选包 rxjava-
+computation-expressions 的一部分，还没有包含在标准RxJava的操作符集合里,需要自己导包，
+但是这个包用的是Rxjava1.0.0-rc3的版本，所以在Rxjava2.0用的话，会出现问题。 可以使用repeat操作符代替
+
+作者：三也视界
+链接：https://www.jianshu.com/p/f54f32b39b7c
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。

@@ -30,6 +30,7 @@ import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.bean.ProInfo;
 import com.yxx.app.dialog.NeverMenuPopup;
+import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
@@ -108,7 +109,16 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         SPUtil.setCheckedProvince(proName);
         SPUtil.setCheckedCity(cityName);
 
-        new TemplateScheme("bin/JYG_TEST_DATA.bin",this).sendStartDownloadCmd();
+        onTemplateDownStart();
+        TemplateScheme templateScheme = new TemplateScheme("bin/test.txt",this);
+   //     templateScheme.sendTemplateData();
+
+/*        byte[] bs = ByteUtil.int2BytesHib(2021);
+        LogUtil.d(" == bs == " + bs.toString());
+        int a = ByteUtil.byteArrayToInt(bs);
+        LogUtil.d(" == aa == " + a);*/
+
+        LogUtil.d(" == hex == " + Integer.toHexString(2021));
     }
 
     @Override
@@ -162,6 +172,8 @@ public class ReplaceCityActivity extends AppCompatActivity implements
                 case 3:
                     int code = msg.arg1;
                     String text = msg.obj.toString();
+                    btn_replace.setText("更 换");
+                    btn_replace.setEnabled(true);
                     ToastUtil.show(String.format("数据发送错误，错误码：%s", code));
                     break;
             }
