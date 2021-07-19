@@ -9,6 +9,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -126,8 +127,8 @@ public class TemplateScheme {
             txBuffer[3] = 0x5a;
             txBuffer[4] = (byte) 0xa5;
             AssetManager manager = MyApplication.getInstance().getResources().getAssets();
-            InputStream inputStream;//模板文件数据流
-            BufferedInputStream bufferedInputStream;//缓冲区
+            InputStream inputStream = null;//模板文件数据流
+            BufferedInputStream bufferedInputStream = null;//缓冲区
             int fileLength;//文件总长度
             try {
                 inputStream = manager.open(fileName);
@@ -148,14 +149,11 @@ public class TemplateScheme {
                     System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
                     System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, tempbytes.length);
 
-                //    BluetoothManager.get().setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
-                //    BluetoothManager.get().sendThread(sendBytes);
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    sendTemplateData();
+                //    LogUtil.d("读取的数据 : " + Arrays.toString(tempbytes));
+                //    sendTemplateData();
+
+                    BluetoothManager.get().setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
+                    BluetoothManager.get().sendThread(sendBytes);
                 } else {
                     //已经读取完了
                     LogUtil.d("已经读取完啦");
@@ -165,6 +163,13 @@ public class TemplateScheme {
             } catch (IOException e) {
                 e.printStackTrace();
                 downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
+            } finally {
+                    try {
+                        if(inputStream != null)inputStream.close();
+                        if(bufferedInputStream != null)bufferedInputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
             }
         }
     }
@@ -233,6 +238,7 @@ public class TemplateScheme {
                     sendTemplateData();
                 } else {
                     //模板数据下发失败
+                    downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
                 }
                 break;
         }

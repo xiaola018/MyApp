@@ -139,6 +139,10 @@ public class BluetoothManager {
         return isSupport() && mBluetoothAdapter.isEnabled();
     }
 
+    public boolean isConnect() {
+        return isOpen() && isConnect;
+    }
+
     public void setReadCode(int readCode) {
         this.readCode = readCode;
     }

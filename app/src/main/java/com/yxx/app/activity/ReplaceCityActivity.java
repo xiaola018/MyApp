@@ -26,6 +26,7 @@ import com.lljjcoder.style.citypickerview.CityPickerView;
 import com.lljjcoder.style.citypickerview.widget.wheel.OnWheelChangedListener;
 import com.lljjcoder.style.citypickerview.widget.wheel.WheelView;
 import com.lljjcoder.style.citypickerview.widget.wheel.adapters.ArrayWheelAdapter;
+import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.bean.ProInfo;
@@ -100,6 +101,10 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
     @Override
     public void onClick(View view) {
+        if(!BluetoothManager.get().isConnect()){
+            ToastUtil.show("蓝牙未连接");
+            return;
+        }
         CustomCityData proData = mProvinceListData.get(proWheelView.getCurrentItem());
         String proName = proData.getName();
         String cityName = proData.getList().get(cityWheelView.getCurrentItem()).getName();
@@ -110,15 +115,8 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         SPUtil.setCheckedCity(cityName);
 
         onTemplateDownStart();
-        TemplateScheme templateScheme = new TemplateScheme("bin/test.txt",this);
-   //     templateScheme.sendTemplateData();
-
-/*        byte[] bs = ByteUtil.int2BytesHib(2021);
-        LogUtil.d(" == bs == " + bs.toString());
-        int a = ByteUtil.byteArrayToInt(bs);
-        LogUtil.d(" == aa == " + a);*/
-
-        LogUtil.d(" == hex == " + Integer.toHexString(2021));
+        TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA.bin",this);
+        templateScheme.sendTemplateData();
     }
 
     @Override
