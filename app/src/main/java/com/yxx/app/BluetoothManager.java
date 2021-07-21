@@ -307,20 +307,15 @@ public class BluetoothManager {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
-                LogUtil.d("onCharacteristicWrite");
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     //所有app发送给模块数据成功的回调都在这里
-                    LogUtil.d("发送模块数据成功");
+                    LogUtil.d("发送模块数据成功, readCode : " + readCode);
                     //    sendHandler(BleBluetoothManage.SERVICE_SEND_DATA_NUMBER, String.valueOf(characteristic.getValue().length));
                     sendDataSign = true;//等到发送数据回调成功才可以继续发送
                     if (sendCount == currentSendCount) {
+                        LogUtil.d("数据已全部发送完毕");
                         //数据发送成功了
                         onBluetoothListener.onSendSuccess(readCode);
-                        //    if(templateCallbackIsNull())mTemplateScheme.getDownCallback().onSendSuccess(readCode);
-                        if (readCode == CODE_START_DOWNLOAD) {
-                            if (mTemplateScheme != null && mTemplateScheme.getDownCallback() != null)
-                                mTemplateScheme.read(new byte[]{0,1},readCode);
-                        }
                     }
                 }
             }
@@ -328,17 +323,12 @@ public class BluetoothManager {
             @Override
             public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
                 super.onDescriptorWrite(gatt, descriptor, status);
-                LogUtil.d("onDescriptorWrite");
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     //mBluetoothGatt.writeDescriptor(descriptor);
                     //来到这里，才算真正的建立连接
                     LogUtil.d("设置监听成功,可以发送数据了...");
                     isConnect = true;
                     onBluetoothListener.onConnectSuccess();
-/*                    mDeiceModule.setUUID(null,descriptor.getUuid().toString(),null);
-                    log("服务中连接成功，给与的返回名称是->"+gatt.getDevice().getName());
-                    log("服务中连接成功，给与的返回地址是->"+gatt.getDevice().getAddress());
-                    sendHandler(BleBluetoothManage.SERVICE_CONNECT_SUCCEED,null);*/
                 }
             }
 
@@ -447,7 +437,8 @@ public class BluetoothManager {
         for (byte[] sendData : sendDataArray) {
             currentSendCount++;
             try {
-                Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
+            //    Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
+                Thread.sleep(10);
                 mNeedCharacteristic.setValue(sendData);
                 sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据
                 if (sendDataSign) {

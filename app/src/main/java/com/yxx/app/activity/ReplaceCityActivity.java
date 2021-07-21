@@ -176,10 +176,12 @@ public class ReplaceCityActivity extends AppCompatActivity implements
                     break;
                 case 3:
                     int code = msg.arg1;
-                    String text = msg.obj.toString();
+                    String text = msg.obj != null ? msg.obj.toString() : "";
                     btn_replace.setText("更 换");
                     btn_replace.setEnabled(true);
-                    ToastUtil.show(String.format("数据发送错误，错误码：%s", code));
+                    ToastUtil.show(String.format("%s，错误码：%s", !TextUtils.isEmpty(text) ? text : "数据发送错误", code));
+                    btn_replace.setText("更 换");
+                    btn_replace.setEnabled(true);
                     break;
             }
         }
