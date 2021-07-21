@@ -437,7 +437,7 @@ public class BluetoothManager {
         for (byte[] sendData : sendDataArray) {
             currentSendCount++;
             try {
-            //    Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
+                //    Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
                 Thread.sleep(10);
                 mNeedCharacteristic.setValue(sendData);
                 sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据
@@ -453,7 +453,7 @@ public class BluetoothManager {
                         return;
                     }
                 }
-                while (!sendDataSign) {
+/*                while (!sendDataSign) {
                     Thread.sleep(10 + 10 * ModuleParameters.getState());
                     number++;
                     if (number == 40) {
@@ -482,7 +482,7 @@ public class BluetoothManager {
                         return;
                     }
                 }
-                number = 0;
+                number = 0;*/
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

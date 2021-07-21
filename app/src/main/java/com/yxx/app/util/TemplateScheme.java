@@ -85,7 +85,7 @@ public class TemplateScheme {
     public void sendHandShakeCmd() {
         byte[] bytes = new byte[]{0x7f};
         bluetoothManager.setReadCode(BluetoothManager.CODE_HANDSHAKE);
-        bluetoothManager.sendThread(bytes);
+        bluetoothManager.sendByte(bytes);
     }
 
     public void sendHandShakeHandler() {
@@ -221,17 +221,21 @@ public class TemplateScheme {
         switch (code) {
             case BluetoothManager.CODE_START_DOWNLOAD://下发模板指令回传
                 byte[] callbytes = new byte[]{(byte) 0xa0, (byte) 0x02, (byte) 0x01};
-                if(bytes.length >= 6 && callbytes[0] == bytes[0] && callbytes[0] == bytes[1]
-                    && callbytes[1] == bytes[2] && callbytes[2] == bytes[5]){
+                if (bytes.length >= 6 && callbytes[0] == bytes[0] && callbytes[0] == bytes[1]
+                        && callbytes[1] == bytes[2] && callbytes[2] == bytes[5]) {
                     LogUtil.d("收到下载模板指令回传数据");
-                    //收到开始下载回传指令， 延迟200ms下发握手指令
-                    long startTime = System.currentTimeMillis();
+                    //收到开始下载回传指令
                     mHander.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            LogUtil.d("延迟时间 ： " + (System.currentTimeMillis() - startTime));
-                            //下发握手指令
-                            mHander.sendEmptyMessage(0);
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    super.run();
+                                    //下发握手指令
+                                    mHander.sendEmptyMessage(0);
+                                }
+                            }.start();
                         }
                     }, 100);
                 }
@@ -240,11 +244,51 @@ public class TemplateScheme {
             case BluetoothManager.CODE_HANDSHAKE://握手回传
                 mHander.removeMessages(0);
                 if (bytes.length >= 5) {
-                    argBuffer = bytes[4];
+/*                    argBuffer = bytes[4];
                     if (bytes[0] == 0x50) {
                         //握手成功,设置波特率
                         sendSetBaudCmd();
                     } else {
+                        //握手失败
+                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                    }*/
+                    try {
+                        boolean flag = false;
+                        for (int i = 0; i < bytes.length; i++) {
+                            if (bytes[i] == (byte) 0xb9 && bytes[i + 1] == (byte) 0x68 && bytes[i + 2] == (byte) 0x00) {
+                                int len = bytes[i + 3];//包长度
+                                int offSet = i + 4;//开始偏移的起始位置
+                                byte verifyH = bytes[bytes.length - 3];
+                                byte verifyL = bytes[bytes.length - 2];
+                                int recvSum = len + 0x68;
+                                byte[] rxbuffer = new byte[bytes.length - offSet - 3];
+                                System.arraycopy(bytes, offSet, rxbuffer, 0, rxbuffer.length);
+                                for (int j = 0; j < rxbuffer.length; j++) {
+                                    recvSum += rxbuffer[j];
+                                }
+                                byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
+                                if(hibyte[0] == verifyH && hibyte[1] == verifyL){
+                                    if(rxbuffer[0] == 0x50){
+                                        flag = true;
+                                        argBuffer = rxbuffer[4];
+                                        //握手成功,设置波特率
+                                        LogUtil.d("握手成功");
+                                        sendSetBaudCmd();
+                                    }else{
+                                        //握手失败
+                                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                                    }
+                                }else{
+                                    //握手失败
+                                    LogUtil.d("握手失败");
+                                    downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                                }
+                                break;
+                            }
+                        }
+                        if(!flag)downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         //握手失败
                         downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
                     }
@@ -293,10 +337,10 @@ public class TemplateScheme {
         }
     }
 
-    private static class MyHander extends Handler{
+    private static class MyHander extends Handler {
         private final WeakReference<TemplateScheme> weakReference;
 
-        public MyHander(TemplateScheme templateScheme){
+        public MyHander(TemplateScheme templateScheme) {
             weakReference = new WeakReference<>(templateScheme);
         }
 
@@ -304,17 +348,17 @@ public class TemplateScheme {
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             TemplateScheme templateScheme = weakReference.get();
-            if(templateScheme == null)return;
-            switch (msg.what){
+            if (templateScheme == null) return;
+            switch (msg.what) {
                 case 0:
-                    if(templateScheme.sendHandShakeCmdCurrentCount <= templateScheme.sendHandShakeCmdMaxCount){
-                        LogUtil.d(String.format("下发第%s次握手指令", templateScheme.sendHandShakeCmdCurrentCount));
+                    if (templateScheme.sendHandShakeCmdCurrentCount <= templateScheme.sendHandShakeCmdMaxCount) {
+                        //    LogUtil.d(String.format("下发第%s次握手指令", templateScheme.sendHandShakeCmdCurrentCount));
                         //下发握手指令
                         templateScheme.sendHandShakeCmd();
                         templateScheme.sendHandShakeCmdCurrentCount++;
                         sendEmptyMessageDelayed(0, 10);
-                    }else{
-                        templateScheme.getDownCallback().onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE,"连接超时");
+                    } else {
+                        templateScheme.getDownCallback().onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "连接超时");
                     }
 
                     break;

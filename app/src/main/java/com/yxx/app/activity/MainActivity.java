@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements
         setSupportActionBar(toolbar);
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         toolbar.inflateMenu(R.menu.menu_home);
