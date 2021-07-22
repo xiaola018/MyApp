@@ -54,6 +54,19 @@ public class Hex {
         return result;
     }
 
+    public static String hexStr2Str(String hexStr) {
+        String str = "0123456789ABCDEF";
+        char[] hexs = hexStr.toCharArray();
+        byte[] bytes = new byte[hexStr.length() / 2];
+        int n;
+        for (int i = 0; i < bytes.length; i++) {
+            n = str.indexOf(hexs[2 * i]) * 16;
+            n += str.indexOf(hexs[2 * i + 1]);
+            bytes[i] = (byte) (n & 0xff);
+        }
+        return new String(bytes);
+    }
+
 
     /**
      * 字节数组转16进制
@@ -90,29 +103,29 @@ public class Hex {
             byteList.addAll(Bytes.asList(yearBytes));
             byteList.addAll(Bytes.asList(monthBytes));
             byteList.addAll(Bytes.asList(dayBytes));
-            if(u_hoursBytes.length == 0){
+            if (u_hoursBytes.length == 0) {
                 byteList.add((byte) 0x00);
-            }else{
+            } else {
                 byteList.addAll(Bytes.asList(u_hoursBytes));
             }
-            if(u_minuteBytes.length == 0){
+            if (u_minuteBytes.length == 0) {
                 byteList.add((byte) 0x00);
-            }else{
+            } else {
                 byteList.addAll(Bytes.asList(u_minuteBytes));
             }
-            if(d_hoursBytes.length == 0){
+            if (d_hoursBytes.length == 0) {
                 byteList.add((byte) 0x00);
-            }else{
+            } else {
                 byteList.addAll(Bytes.asList(d_hoursBytes));
             }
-            if(d_minuteBytes.length == 0){
+            if (d_minuteBytes.length == 0) {
                 byteList.add((byte) 0x00);
-            }else{
+            } else {
                 byteList.addAll(Bytes.asList(d_minuteBytes));
             }
             byteList.addAll(Bytes.asList(priceBytes));
 
-            if(priceBytes.length == 1){
+            if (priceBytes.length == 1) {
                 byteList.add((byte) 0x00);
             }
 

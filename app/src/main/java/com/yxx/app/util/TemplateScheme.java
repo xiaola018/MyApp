@@ -16,6 +16,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -244,14 +245,6 @@ public class TemplateScheme {
             case BluetoothManager.CODE_HANDSHAKE://握手回传
                 mHander.removeMessages(0);
                 if (bytes.length >= 5) {
-/*                    argBuffer = bytes[4];
-                    if (bytes[0] == 0x50) {
-                        //握手成功,设置波特率
-                        sendSetBaudCmd();
-                    } else {
-                        //握手失败
-                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
-                    }*/
                     try {
                         boolean flag = false;
                         for (int i = 0; i < bytes.length; i++) {
@@ -264,7 +257,9 @@ public class TemplateScheme {
                                 byte[] rxbuffer = new byte[bytes.length - offSet - 3];
                                 System.arraycopy(bytes, offSet, rxbuffer, 0, rxbuffer.length);
                                 for (int j = 0; j < rxbuffer.length; j++) {
-                                    recvSum += rxbuffer[j];
+                                    String hex = Hex.bytesToHex(new byte[]{rxbuffer[j]});
+                                    BigInteger bigInteger = new BigInteger(hex,16);
+                                    recvSum += bigInteger.intValue();
                                 }
                                 byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
                                 if(hibyte[0] == verifyH && hibyte[1] == verifyL){
@@ -276,12 +271,12 @@ public class TemplateScheme {
                                         sendSetBaudCmd();
                                     }else{
                                         //握手失败
-                                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                                    //    downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
                                     }
                                 }else{
                                     //握手失败
                                     LogUtil.d("握手失败");
-                                    downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                                //    downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
                                 }
                                 break;
                             }

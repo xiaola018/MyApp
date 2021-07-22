@@ -57,7 +57,9 @@ import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Observer;
@@ -113,6 +115,50 @@ public class MainActivity extends AppCompatActivity implements
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         discoveryDialog.setBluetoothCallback(this);
         setSupportActionBar(toolbar);
+    //    abc();
+    }
+
+    private void abc(){
+        byte[] bytes = new byte[]{
+                0x46,(byte)0xb9,0x68,0x00,0x38,0x50,0x01,0x51,0x06,0x20,
+                (byte) 0x93,0x03,0x01,(byte)0xff,(byte)0xff, (byte)0xbf,
+                (byte)0xaf,(byte)0xff,0x00,(byte)0xce,(byte)0xf7,(byte)0xb0,
+                0x73,0x55,0x00,(byte)0xf7,0x64,0x0c,(byte)0x8a,0x16, (byte)0x91,
+                (byte)0xba,0x0e,0x1e,0x1f,(byte)0xff,0x01,0x00,0x00,(byte)0xfe,
+                0x04,(byte)0xa8,0x21,0x04,0x09, (byte)0x80,(byte)0xff,0x60,
+                0x14,0x3c,0x65,(byte)0x81,(byte)0x9b,(byte)0xc6,(byte)0xff,0x15,(byte)0x91,0x16
+        };
+        LogUtil.d("进入方法");
+
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] == (byte) 0xb9 && bytes[i + 1] == (byte) 0x68 && bytes[i + 2] == (byte) 0x00) {
+                int len = bytes[i + 3];//包长度
+                int offSet = i + 4;//开始偏移的起始位置
+                byte verifyH = bytes[bytes.length - 3];
+                byte verifyL = bytes[bytes.length - 2];
+                int recvSum = len + 0x68;
+                byte[] rxbuffer = new byte[bytes.length - offSet - 3];
+                System.arraycopy(bytes, offSet, rxbuffer, 0, rxbuffer.length);
+                for (int j = 0; j < rxbuffer.length; j++) {
+                    String hex = Hex.bytesToHex(new byte[]{rxbuffer[j]});
+                    BigInteger bigInteger = new BigInteger(hex,16);
+                    recvSum += bigInteger.intValue();
+                }
+                byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
+                if(hibyte[0] == verifyH && hibyte[1] == verifyL){
+                    if(rxbuffer[0] == 0x50){
+                        //握手成功,设置波特率
+                        LogUtil.d("握手成功");
+                    }else{
+                        //握手失败
+                    }
+                }else{
+                    //握手失败
+                    LogUtil.d("握手失败");
+                }
+                break;
+            }
+        }
     }
 
     @Override
