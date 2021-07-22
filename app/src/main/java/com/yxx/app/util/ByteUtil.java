@@ -3,6 +3,7 @@ package com.yxx.app.util;
 import com.google.common.primitives.Bytes;
 import com.yxx.app.bean.SendInfo;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,7 +107,7 @@ public class ByteUtil {
     private static byte getSign(List<Byte> byteList) {
         int byteNum = 0;
         for (Byte b : byteList) {
-            byteNum += b;
+            byteNum += new BigInteger(Hex.bytesToHex(new byte[]{b}), 16).intValue();
         }
         return ByteUtil.int2Byte(byteNum);
     }

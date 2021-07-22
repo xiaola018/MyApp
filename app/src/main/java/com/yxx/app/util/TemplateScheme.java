@@ -16,6 +16,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +33,7 @@ public class TemplateScheme {
 
     private byte argBuffer;//回传的变量，用于接收握手成功后的参数值
 
-    private int readLength = 1;//从文件读取了多少长度
+    private int readLength = 0;//从文件读取了多少长度
 
     private BluetoothManager bluetoothManager;
 
@@ -42,6 +43,8 @@ public class TemplateScheme {
 
     private int sendHandShakeCmdMaxCount = 30;//发送握手指令最大次数
     public int sendHandShakeCmdCurrentCount = 1;//当前发送第几次握手指令
+
+    private boolean isHandShake;
 
     public MyHander mHander;
 
@@ -83,9 +86,12 @@ public class TemplateScheme {
      * 发送握手指令
      */
     public void sendHandShakeCmd() {
-        byte[] bytes = new byte[]{0x7f};
-        bluetoothManager.setReadCode(BluetoothManager.CODE_HANDSHAKE);
-        bluetoothManager.sendByte(bytes);
+        if(!isHandShake){
+            byte[] bytes = new byte[]{0x7f};
+            bluetoothManager.setReadCode(BluetoothManager.CODE_HANDSHAKE);
+            bluetoothManager.sendByte(bytes, false);
+        }
+
     }
 
     public void sendHandShakeHandler() {
@@ -102,13 +108,13 @@ public class TemplateScheme {
         txBuffer[0] = 0x01;
         txBuffer[1] = argBuffer;
         txBuffer[2] = 0x40;
-        txBuffer[3] = baudBytes[0];
-        txBuffer[4] = baudBytes[1];
+        txBuffer[3] = (byte)0xff;
+        txBuffer[4] = (byte)0xcc;
         txBuffer[5] = 0x00;
         txBuffer[6] = 0x00;
         txBuffer[7] = (byte) 0x97;
         bluetoothManager.setReadCode(BluetoothManager.CODE_SET_BAUD);
-        bluetoothManager.sendThread(txBuffer);
+        bluetoothManager.sendThread(txBuffer, true);
     }
 
     /**
@@ -123,7 +129,7 @@ public class TemplateScheme {
         txBuffer[3] = 0x5a;
         txBuffer[4] = (byte) 0xa5;
         bluetoothManager.setReadCode(BluetoothManager.CODE_READY_DOWNLOAD);
-        bluetoothManager.sendThread(txBuffer);
+        bluetoothManager.sendThread(txBuffer, true);
     }
 
     /**
@@ -138,11 +144,11 @@ public class TemplateScheme {
         txBuffer[3] = 0x5a;
         txBuffer[4] = (byte) 0xa5;
         bluetoothManager.setReadCode(BluetoothManager.CODE_ERASE);
-        bluetoothManager.sendThread(txBuffer);
+        bluetoothManager.sendThread(txBuffer, true);
     }
 
     public void sendTemplateData() {
-        LogUtil.d("下发模板数据");
+        bluetoothManager.startTime = System.currentTimeMillis();
         MyThread myThread = new MyThread();
         myThread.start();
     }
@@ -163,29 +169,26 @@ public class TemplateScheme {
                 inputStream = manager.open(fileName);
                 //总长度
                 fileLength = inputStream.available();
-                LogUtil.d("模板文件总长度：" + fileLength);
-                inputStream.skip(readLength - 1);
+                inputStream.skip(readLength);
 
                 byte[] tempbytes = new byte[128];
                 int len;
                 bufferedInputStream = new BufferedInputStream(inputStream);
                 if ((len = bufferedInputStream.read(tempbytes)) != -1) {
                     sendCount++;
-                    LogUtil.d(String.format("发送模板数据第%s次", sendCount));
-                    readLength += len;
+                    LogUtil.d(String.format("发送模板数据第%s次", sendCount + ",耗时：" + (System.currentTimeMillis() - bluetoothManager.startTime)));
+
                     downCallback.onTemplateDownProgress((readLength * 100 / fileLength));
                     byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
                     txBuffer[1] = bytesHib[0];
                     txBuffer[2] = bytesHib[1];
+                    readLength += len;
                     byte[] sendBytes = new byte[txBuffer.length + tempbytes.length];
                     System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
                     System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, tempbytes.length);
 
-                    //    LogUtil.d("读取的数据 : " + Arrays.toString(tempbytes));
-                    //    sendTemplateData();
-
                     bluetoothManager.setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
-                    bluetoothManager.sendThread(sendBytes);
+                    bluetoothManager.sendByte(sendBytes, true);
                 } else {
                     //已经读取完了
                     LogUtil.d("已经读取完啦");
@@ -223,7 +226,6 @@ public class TemplateScheme {
                 byte[] callbytes = new byte[]{(byte) 0xa0, (byte) 0x02, (byte) 0x01};
                 if (bytes.length >= 6 && callbytes[0] == bytes[0] && callbytes[0] == bytes[1]
                         && callbytes[1] == bytes[2] && callbytes[2] == bytes[5]) {
-                    LogUtil.d("收到下载模板指令回传数据");
                     //收到开始下载回传指令
                     mHander.postDelayed(new Runnable() {
                         @Override
@@ -243,50 +245,18 @@ public class TemplateScheme {
                 break;
             case BluetoothManager.CODE_HANDSHAKE://握手回传
                 mHander.removeMessages(0);
+                isHandShake = true;
                 if (bytes.length >= 5) {
-/*                    argBuffer = bytes[4];
-                    if (bytes[0] == 0x50) {
-                        //握手成功,设置波特率
-                        sendSetBaudCmd();
-                    } else {
-                        //握手失败
-                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
-                    }*/
                     try {
-                        boolean flag = false;
-                        for (int i = 0; i < bytes.length; i++) {
-                            if (bytes[i] == (byte) 0xb9 && bytes[i + 1] == (byte) 0x68 && bytes[i + 2] == (byte) 0x00) {
-                                int len = bytes[i + 3];//包长度
-                                int offSet = i + 4;//开始偏移的起始位置
-                                byte verifyH = bytes[bytes.length - 3];
-                                byte verifyL = bytes[bytes.length - 2];
-                                int recvSum = len + 0x68;
-                                byte[] rxbuffer = new byte[bytes.length - offSet - 3];
-                                System.arraycopy(bytes, offSet, rxbuffer, 0, rxbuffer.length);
-                                for (int j = 0; j < rxbuffer.length; j++) {
-                                    recvSum += rxbuffer[j];
-                                }
-                                byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
-                                if(hibyte[0] == verifyH && hibyte[1] == verifyL){
-                                    if(rxbuffer[0] == 0x50){
-                                        flag = true;
-                                        argBuffer = rxbuffer[4];
-                                        //握手成功,设置波特率
-                                        LogUtil.d("握手成功");
-                                        sendSetBaudCmd();
-                                    }else{
-                                        //握手失败
-                                        downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
-                                    }
-                                }else{
-                                    //握手失败
-                                    LogUtil.d("握手失败");
-                                    downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
-                                }
-                                break;
-                            }
+                        byte[] commbytes = checkDataComm(bytes);
+                        if(commbytes.length >= 5 && commbytes[0] == 0x50){
+                            LogUtil.d("握手成功");
+                            argBuffer = commbytes[4];
+                            sendSetBaudCmd();
+                        }else{
+                            downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
+                            LogUtil.d("握手失败");
                         }
-                        if(!flag)downCallback.onTemplateDownFail(BluetoothManager.CODE_HANDSHAKE, "");
                     } catch (Exception e) {
                         e.printStackTrace();
                         //握手失败
@@ -298,7 +268,8 @@ public class TemplateScheme {
                 }
                 break;
             case BluetoothManager.CODE_SET_BAUD://设置波特率回传
-                if (bytes.length >= 1 && bytes[0] == 0x01) {
+                byte[] rxbuffer = checkDataComm(bytes);
+                if (rxbuffer.length >= 1 && rxbuffer[0] == 0x01) {
                     //设置波特率成功,准备下载
                     sendReadyDownloadCmd();
                 } else {
@@ -307,7 +278,8 @@ public class TemplateScheme {
                 }
                 break;
             case BluetoothManager.CODE_READY_DOWNLOAD://准备下载回传
-                if (bytes.length >= 1 && bytes[0] == 0x05) {
+                byte[] readyCommByte = checkDataComm(bytes);
+                if (readyCommByte.length >= 1 && readyCommByte[0] == 0x05) {
                     //准备下载回调成功。 擦除芯片指令
                     sendEraseCmd();
                 } else {
@@ -316,7 +288,8 @@ public class TemplateScheme {
                 }
                 break;
             case BluetoothManager.CODE_ERASE://擦除回传
-                if (bytes.length >= 1 && bytes[0] == 0x03) {
+                byte[] eraseCommBytes = checkDataComm(bytes);
+                if (eraseCommBytes.length >= 1 && eraseCommBytes[0] == 0x03) {
                     //擦除成功
                     sendTemplateData();
                 } else {
@@ -325,16 +298,54 @@ public class TemplateScheme {
                 }
                 break;
             case BluetoothManager.CODE_TEMPLATE_DATA://下发模板数据回传
-                if (bytes.length >= 2 && bytes[0] == 0x02 && "T".equals(new String(new byte[bytes[1]]))) {
+                byte[] tempDataCommBytes = checkDataComm(bytes);
+                if (tempDataCommBytes.length >= 2 && tempDataCommBytes[0] == 0x02 && "T".equals(Hex.hexStr2Str(Hex.bytesToHex(new byte[]{tempDataCommBytes[1]})))) {
                     //模板数据下发成功，下发下一段数据
                     sendTemplateData();
                 } else {
                     //模板数据下发失败
                     downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
                 }
-                sendTemplateData();
                 break;
         }
+    }
+
+    /**
+     *  校验数据包
+     *  -- 校验包头
+     *  -- 检查验证码
+     * @param readBytes
+     * @return
+     */
+    private byte[] checkDataComm(byte[] readBytes) {
+        try{
+            for (int i = 0; i < readBytes.length; i++) {
+                if (readBytes[i] == (byte) 0xb9 && readBytes[i + 1] == (byte) 0x68 && readBytes[i + 2] == (byte) 0x00) {
+                    int len = new BigInteger(Hex.bytesToHex(new byte[]{readBytes[i + 3]}), 16).intValue() - 6;//包长度
+                //    LogUtil.d("接收到数据包长度 ： " + len);
+                    int offSet = i + 4;//开始偏移的起始位置
+                    byte verifyH = readBytes[readBytes.length - 3];
+                    byte verifyL = readBytes[readBytes.length - 2];
+                    int recvSum = len + 6 + new BigInteger("68",16).intValue();
+                    byte[] rxbuffer = new byte[readBytes.length - offSet - 3];
+                    System.arraycopy(readBytes, offSet, rxbuffer, 0, rxbuffer.length);
+                    for (int j = 0; j < rxbuffer.length; j++) {
+                        String hex = Hex.bytesToHex(new byte[]{rxbuffer[j]});
+                        BigInteger bigInteger = new BigInteger(hex,16);
+                        recvSum += bigInteger.intValue();
+                    }
+                //    LogUtil.d("校验码数值 ：" + recvSum);
+                    byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
+                //    LogUtil.d("校验码Hex ：" +Hex.bytesToHex(hibyte));
+                    if(hibyte[0] == verifyH && hibyte[1] == verifyL){
+                        return rxbuffer;
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new byte[0];
     }
 
     private static class MyHander extends Handler {

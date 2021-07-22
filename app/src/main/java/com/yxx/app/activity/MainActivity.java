@@ -58,6 +58,7 @@ import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Observer;

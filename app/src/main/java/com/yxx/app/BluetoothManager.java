@@ -33,6 +33,7 @@ import com.yxx.app.util.ModuleParameters;
 import com.yxx.app.util.TemplateScheme;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,14 +61,16 @@ public class BluetoothManager {
     //下发设置波特率
     public static final int CODE_SET_BAUD = 1004;
 
+    //下发准备下载
+    public static final int CODE_READY_DOWNLOAD = 1005;
+
     //下发擦除
-    public static final int CODE_ERASE = 1005;
+    public static final int CODE_ERASE = 1006;
 
     //下发模板数据
-    public static final int CODE_TEMPLATE_DATA = 1006;
+    public static final int CODE_TEMPLATE_DATA = 1007;
 
-    //下发准备下载
-    public static final int CODE_READY_DOWNLOAD = 1007;
+
 
     //蓝牙的特征值，发送
     private final static String SERVICE_EIGENVALUE_SEND = "0000ffe1-0000-1000-8000-00805f9b34fb";
@@ -99,6 +102,7 @@ public class BluetoothManager {
 
     private TemplateScheme mTemplateScheme;//下载协议
 
+    public long startTime;
 
     public static BluetoothManager get() {
         if (mBluetoothManager == null) mBluetoothManager = new BluetoothManager();
@@ -164,19 +168,19 @@ public class BluetoothManager {
         }
         // 开始搜索
         mBluetoothAdapter.startDiscovery();
-        LogUtil.d("正在搜索设备。。");
+    //    LogUtil.d("正在搜索设备。。");
     }
 
     public void cancelDiscovery() {
         mBluetoothAdapter.cancelDiscovery();
-        LogUtil.d("取消蓝牙搜索");
+    //    LogUtil.d("取消蓝牙搜索");
     }
 
     /**
      * 蓝牙配对
      */
     public void makePair(String address) {
-        LogUtil.d("开始配对......");
+    //    LogUtil.d("开始配对......");
         if (isOpen()) {
             BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
             device.createBond();
@@ -195,7 +199,6 @@ public class BluetoothManager {
             String action = intent.getAction();
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                LogUtil.d("state = " + state);
                 switch (state) {
                     case 10:
                         LogUtil.d("蓝牙关闭状态");
@@ -222,7 +225,7 @@ public class BluetoothManager {
                 //蓝牙设备连接状态
                 int status = device.getBondState();
 
-                LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
+            //    LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
 
                 DeviceModel deviceModel = new DeviceModel();
                 deviceModel.deviceName = name;
@@ -230,25 +233,25 @@ public class BluetoothManager {
                 deviceModel.mDevice = device;
                 onBluetoothListener.onDeviceAdd(deviceModel);
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                LogUtil.d("开始搜索");
+            //    LogUtil.d("开始搜索");
                 onBluetoothListener.discoveryStarted();
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                LogUtil.d("蓝牙设备搜索完成");
+            //    LogUtil.d("蓝牙设备搜索完成");
                 onBluetoothListener.discoveryFinished();
             } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 switch (device.getBondState()) {
                     case BluetoothDevice.BOND_BONDING:// 正在配对
-                        LogUtil.d("正在配对蓝牙");
+                    //    LogUtil.d("正在配对蓝牙");
                         //    mMakePariListener.whilePari(device);
                         break;
                     case BluetoothDevice.BOND_BONDED:// 配对结束
-                        LogUtil.d("配对成功");
+                    //    LogUtil.d("配对成功");
                         //    mMakePariListener.pairingSuccess(device);
                         break;
                     case BluetoothDevice.BOND_NONE:// 取消配对/未配对
                         //    mMakePariListener.cancelPari(device);
-                        LogUtil.d("配对失败");
+                     //   LogUtil.d("配对失败");
                     default:
                         break;
                 }
@@ -273,7 +276,6 @@ public class BluetoothManager {
         mBluetoothGatt = deviceModel.mDevice.connectGatt(context, true, new BluetoothGattCallback() {
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-                LogUtil.d(" connect == " + newState);
                 if (newState == 133) {
                     LogUtil.d("出现133问题，需要扫描重连");
                     isConnect = false;
@@ -281,7 +283,6 @@ public class BluetoothManager {
                 }
                 switch (newState) {
                     case BluetoothProfile.STATE_CONNECTED:
-                        LogUtil.d("connect = STATE_CONNECTED");
                         if (mBluetoothGatt == null) {
                             isConnect = false;
                             onBluetoothListener.onConnectError();
@@ -309,8 +310,7 @@ public class BluetoothManager {
                 super.onCharacteristicWrite(gatt, characteristic, status);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     //所有app发送给模块数据成功的回调都在这里
-                    LogUtil.d("发送模块数据成功, readCode : " + readCode);
-                    //    sendHandler(BleBluetoothManage.SERVICE_SEND_DATA_NUMBER, String.valueOf(characteristic.getValue().length));
+                    LogUtil.d("发送模块数据成功, readCode : " + readCode + ", 耗时：" + (System.currentTimeMillis() - startTime));
                     sendDataSign = true;//等到发送数据回调成功才可以继续发送
                     if (sendCount == currentSendCount) {
                         LogUtil.d("数据已全部发送完毕");
@@ -324,9 +324,8 @@ public class BluetoothManager {
             public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
                 super.onDescriptorWrite(gatt, descriptor, status);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    //mBluetoothGatt.writeDescriptor(descriptor);
                     //来到这里，才算真正的建立连接
-                    LogUtil.d("设置监听成功,可以发送数据了...");
+                //    LogUtil.d("设置监听成功,可以发送数据了...");
                     isConnect = true;
                     onBluetoothListener.onConnectSuccess();
                 }
@@ -336,24 +335,24 @@ public class BluetoothManager {
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
                 List<BluetoothGattService> servicesLists = mBluetoothGatt.getServices();//获取模块的所有服务
-                LogUtil.d("扫描到服务的个数:" + servicesLists.size());
+            //    LogUtil.d("扫描到服务的个数:" + servicesLists.size());
                 int i = 0;
 
                 for (final BluetoothGattService servicesList : servicesLists) {
                     ++i;
-                    LogUtil.d("-----------打印服务----------");
-                    LogUtil.d(i + "号服务的uuid: " + servicesList.getUuid().toString());
+                //    LogUtil.d("-----------打印服务----------");
+                //    LogUtil.d(i + "号服务的uuid: " + servicesList.getUuid().toString());
                     List<BluetoothGattCharacteristic> gattCharacteristics = servicesList
                             .getCharacteristics();//获取单个服务下的所有特征
                     int j = 0;
-                    LogUtil.d("----------打印特征-----------");
+                //    LogUtil.d("----------打印特征-----------");
                     for (final BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                         ++j;
                         if (gattCharacteristic.getUuid().toString().equals(SERVICE_EIGENVALUE_SEND)) {//汇承蓝牙的UUID
-                            LogUtil.d(i + "号服务的第" + j + "个特征" + gattCharacteristic.getUuid().toString());
+                        //    LogUtil.d(i + "号服务的第" + j + "个特征" + gattCharacteristic.getUuid().toString());
                             //    mDeiceModule.setUUID(servicesList.getUuid().toString(),null,gattCharacteristic.getUuid().toString());//存下特征
                             mNeedCharacteristic = gattCharacteristic;
-                            LogUtil.d("发送特征：" + mNeedCharacteristic.getUuid().toString());
+                        //    LogUtil.d("发送特征：" + mNeedCharacteristic.getUuid().toString());
                             mBluetoothGatt.setCharacteristicNotification(
                                     mNeedCharacteristic, true);
                             mTimeHandler.postDelayed(new Runnable() {
@@ -369,12 +368,11 @@ public class BluetoothManager {
                                         mBluetoothGatt.writeDescriptor(clientConfig);//必须是设置这个才能监听模块数据
                                     } else {
                                         LogUtil.d("备用方法测试");
-                                        //    setNotification(mBluetoothGatt,linkLossService.getCharacteristic(UUID.fromString(SERVICE_EIGENVALUE_READ)),true);
                                     }
                                 }
                             }, 200);
                         } else {
-                            LogUtil.d(i + "号服务的第" + j + "个特征" + gattCharacteristic.getUuid().toString());
+                        //    LogUtil.d(i + "号服务的第" + j + "个特征" + gattCharacteristic.getUuid().toString());
                         }
                     }
                 }
@@ -388,8 +386,8 @@ public class BluetoothManager {
 
                 try {
                     //    LogUtil.d("数据是：" + new String(characteristic.getValue(), 0, characteristic.getValue().length, "GB2312"));
-                    LogUtil.d("接收到数据回调 readCode = " + readCode);
-                    LogUtil.d("接收到数据回调 str = " + Arrays.toString(characteristic.getValue()));
+                    LogUtil.d("接收到数据回调 readCode = " + readCode + ", 耗时：" + (System.currentTimeMillis() - startTime));
+                //    LogUtil.d("接收到数据回调 str = " + Arrays.toString(characteristic.getValue()));
                     LogUtil.d("接收到数据回调 Hex = " + Hex.bytesToHex(characteristic.getValue()));
                     if (mTemplateScheme != null) {
                         mTemplateScheme.read(characteristic.getValue(), readCode);
@@ -426,8 +424,9 @@ public class BluetoothManager {
      *
      * @param buff 发送到模板的数据
      */
-    public void sendByte(byte[] buff) {
+    public void sendByte(byte[] buff, boolean addHead) {
         LogUtil.d("进入发送方法, 数据总长度 == " + buff.length);
+
         //根据长度获取分包后的数据
         List<byte[]> sendDataArray = ByteUtil.getSendDataByte(buff, separateLength);
         int number = 0;
@@ -437,8 +436,35 @@ public class BluetoothManager {
         for (byte[] sendData : sendDataArray) {
             currentSendCount++;
             try {
-                //    Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
-                Thread.sleep(10);
+                //               Thread.sleep(5 + 10 * ModuleParameters.getState());//每次发包前，延时一会，更容易成功
+                Thread.sleep(10);//每次发包前，延时一会，更容易成功
+                if (addHead) {
+                    try {
+                        byte[] dataCommByte = new byte[8 + sendData.length];
+                        dataCommByte[0] = 0x46;
+                        dataCommByte[1] = (byte) 0xb9;
+                        dataCommByte[2] = (byte) 0x6a;
+                        dataCommByte[3] = 0x00;
+                        int len = sendData.length + 6;//长度
+                        dataCommByte[4] = ByteUtil.int2Byte(len);
+                        int sum = len + new BigInteger("6a", 16).intValue();
+                        for (int i = 0; i < sendData.length; i++) {
+                            sum += new BigInteger(Hex.bytesToHex(new byte[]{sendData[i]}), 16).intValue();
+                            dataCommByte[i + 5] = sendData[i];
+                        }
+                        byte[] hibyte = ByteUtil.int2BytesHib(sum);
+                        dataCommByte[dataCommByte.length - 3] = hibyte[0];
+                        dataCommByte[dataCommByte.length - 2] = hibyte[1];
+                        dataCommByte[dataCommByte.length - 1] = 0x16;//结尾
+
+
+                        sendData = dataCommByte;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        LogUtil.d("添加数据包失败");
+                    }
+                }
+
                 mNeedCharacteristic.setValue(sendData);
                 sendDataSign = !mBluetoothGatt.writeCharacteristic(mNeedCharacteristic);//蓝牙发送数据
                 if (sendDataSign) {
@@ -481,8 +507,8 @@ public class BluetoothManager {
                         LogUtil.d("发送失败,关闭线程");
                         return;
                     }
-                }
-                number = 0;*/
+                }*/
+                number = 0;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -495,15 +521,25 @@ public class BluetoothManager {
      * @param buff 发送到模板的数据
      */
     public void sendThread(byte[] buff) {
+        sendThread(buff, false);
+    }
+
+    /**
+     * 开启新线程发送
+     *
+     * @param buff 发送到模板的数据
+     */
+    public void sendThread(byte[] buff, boolean addHead) {
 
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                sendByte(buff);
+                sendByte(buff, addHead);
             }
         };
         mThreadService.execute(runnable);
     }
+
 
     /**
      * 发送单条打印数据
