@@ -73,6 +73,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener ,
         Toolbar.OnMenuItemClickListener,
+        BluetoothManager.OnBluetoothListener,
         DiscoveryBluetoothDialog.DiscoveryBluetoothCallback{
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1001;
@@ -101,7 +102,11 @@ public class MainActivity extends AppCompatActivity implements
         initView();
         initViewPager();
 
-        initListener();
+        BluetoothManager.get().bindService(this, this);
+        //MainActivity
+        //BluetoothManager
+        //BluetoothService
+        //清单文件
     }
 
     private void findView() {
@@ -169,6 +174,12 @@ public class MainActivity extends AppCompatActivity implements
         menuConnectView = (MenuConnectView) menuItem.getActionView();
         menuConnectView.setOnClickListener(v -> checkPermis());
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BluetoothManager.get().disconnect();
     }
 
     private void initViewPager() {
@@ -266,132 +277,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private void initListener(){
-        BluetoothManager.get().setOnBluetoothListener(new BluetoothManager.OnBluetoothListener() {
-            @Override
-            public void open() {
-                LogUtil.d("open");
-                openBluetooth();
-            }
-
-            @Override
-            public void closed() {
-                LogUtil.d("closed");
-            }
-
-            @Override
-            public void discoveryStarted() {
-                LogUtil.d("discoveryStarted");
-            }
-
-            @Override
-            public void discoveryFinished() {
-                LogUtil.d("discoveryFinished");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        discoveryDialog.discoveryFinished();
-                    }
-                });
-
-            }
-
-            @Override
-            public void onDeviceAdd(DeviceModel deviceModel) {
-                LogUtil.d("onDeviceAdd");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        discoveryDialog.addDevice(deviceModel);
-                    }
-                });
-
-            }
-
-
-            @Override
-            public void whilePari(BluetoothDevice device) {
-
-            }
-
-            @Override
-            public void pairingSuccess(BluetoothDevice device) {
-
-            }
-
-            @Override
-            public void cancelPari(BluetoothDevice device) {
-
-            }
-
-            @Override
-            public void onConnectSuccess() {
-                LogUtil.d("onConnectSuccess");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        toolbar.setTitle("已连接");
-                        menuConnectView.showProgressBar(false);
-                        inputFragment.sendBtnEnable(true);
-                        toolbar.setNavigationIcon(R.mipmap.ic_b_c);
-                    }
-                });
-            }
-
-            @Override
-            public void onConnectError() {
-                LogUtil.d("onConnectError");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        toolbar.setTitle("未连接");
-                        menuConnectView.showProgressBar(false);
-                        inputFragment.sendBtnEnable(false);
-                        toolbar.setNavigationIcon(R.mipmap.ic_b_n);
-                    }
-                });
-            }
-
-            @Override
-            public void onStateDisconnected() {
-                LogUtil.d("onStateDisconnected");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        toolbar.setTitle("已断开");
-                        menuConnectView.showProgressBar(false);
-                        inputFragment.sendBtnEnable(false);
-                        toolbar.setNavigationIcon(R.mipmap.ic_b_n);
-                    }
-                });
-            }
-
-            @Override
-            public void onSendSuccess(int code) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(code == BluetoothManager.CODE_PRINT){
-                            ToastUtil.show("发送成功");
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onSendFaile(int code, String msg) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(code == BluetoothManager.CODE_PRINT){
-                            ToastUtil.show("发送成功");
-                        }
-                    }
-                });
-            }
-        });
-    }
-
     @Override
     public void cancelDiscovery() {
 
@@ -449,6 +334,129 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void checkUpdate() {
                 UpdateManager.check(MainActivity.this,false);
+            }
+        });
+    }
+
+
+    @Override
+    public void open() {
+        LogUtil.d("open");
+        openBluetooth();
+    }
+
+    @Override
+    public void closed() {
+        LogUtil.d("closed");
+    }
+
+    @Override
+    public void discoveryStarted() {
+        LogUtil.d("discoveryStarted");
+    }
+
+    @Override
+    public void discoveryFinished() {
+        LogUtil.d("discoveryFinished");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                discoveryDialog.discoveryFinished();
+            }
+        });
+
+    }
+
+    @Override
+    public void onDeviceAdd(DeviceModel deviceModel) {
+        LogUtil.d("onDeviceAdd");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                discoveryDialog.addDevice(deviceModel);
+            }
+        });
+
+    }
+
+
+    @Override
+    public void whilePari(BluetoothDevice device) {
+
+    }
+
+    @Override
+    public void pairingSuccess(BluetoothDevice device) {
+
+    }
+
+    @Override
+    public void cancelPari(BluetoothDevice device) {
+
+    }
+
+    @Override
+    public void onConnectSuccess() {
+        LogUtil.d("onConnectSuccess");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                toolbar.setTitle("已连接");
+                menuConnectView.showProgressBar(false);
+                inputFragment.sendBtnEnable(true);
+                toolbar.setNavigationIcon(R.mipmap.ic_b_c);
+            }
+        });
+    }
+
+    @Override
+    public void onConnectError() {
+        LogUtil.d("onConnectError");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                toolbar.setTitle("未连接");
+                menuConnectView.showProgressBar(false);
+                inputFragment.sendBtnEnable(false);
+                toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+            }
+        });
+    }
+
+    @Override
+    public void onStateDisconnected() {
+        LogUtil.d("onStateDisconnected");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                toolbar.setTitle("已断开");
+                menuConnectView.showProgressBar(false);
+                inputFragment.sendBtnEnable(false);
+                toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+            }
+        });
+    }
+
+    @Override
+    public void onSendSuccess(int code) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(code == BluetoothManager.CODE_PRINT){
+                    ToastUtil.show("发送成功");
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onSendFaile(int code, String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(code == BluetoothManager.CODE_PRINT){
+                    ToastUtil.show("发送成功");
+                }
             }
         });
     }
