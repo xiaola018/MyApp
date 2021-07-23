@@ -148,6 +148,7 @@ public class TemplateScheme {
     }
 
     public void sendTemplateData() {
+        bluetoothManager.isRead = false;
         bluetoothManager.startTime = System.currentTimeMillis();
         MyThread myThread = new MyThread();
         myThread.start();
@@ -155,8 +156,45 @@ public class TemplateScheme {
 
     private class MyThread extends Thread {
 
+        private InputStream is;
+        private boolean isRead = true;
+
         @Override
         public void run() {
+            sendData();
+            try {
+                is = bluetoothManager.mSocket.getInputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            byte[] rxbuffer = new byte[128];
+            while (isRead) {
+                try {
+                    do {
+                        int len = is.read(rxbuffer);
+                        if (len != -1) {
+                            long s = System.currentTimeMillis();
+                            byte[] dataBuffer = new byte[len];
+                            if (dataBuffer.length >= 0)
+                                System.arraycopy(rxbuffer, 0, dataBuffer, 0, dataBuffer.length);
+                            LogUtil.d("收到数据 ： " + Hex.bytesToHex(dataBuffer));
+                            byte[] tempDataCommBytes = checkDataComm(dataBuffer);
+                            if (tempDataCommBytes.length >= 2 && tempDataCommBytes[0] == 0x02 && "T".equals(Hex.hexStr2Str(Hex.bytesToHex(new byte[]{tempDataCommBytes[1]})))) {
+                                //模板数据下发成功，下发下一段数据
+                                sendData();
+                            } else {
+                                //模板数据下发失败
+                                downCallback.onTemplateDownFail(BluetoothManager.CODE_TEMPLATE_DATA, "");
+                            }
+                        }
+                    } while (is.available() != 0);
+                } catch (Exception e) {
+
+                }
+            }
+        }
+
+        private void sendData(){
             byte[] txBuffer = new byte[5];
             txBuffer[0] = (byte) (readLength == 1 ? 0x22 : 0x02);
             txBuffer[3] = 0x5a;
@@ -171,7 +209,7 @@ public class TemplateScheme {
                 fileLength = inputStream.available();
                 inputStream.skip(readLength);
 
-                byte[] tempbytes = new byte[128];
+                byte[] tempbytes = new byte[1024];
                 int len;
                 bufferedInputStream = new BufferedInputStream(inputStream);
                 if ((len = bufferedInputStream.read(tempbytes)) != -1) {
@@ -187,10 +225,16 @@ public class TemplateScheme {
                     System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
                     System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, tempbytes.length);
 
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     bluetoothManager.setReadCode(BluetoothManager.CODE_TEMPLATE_DATA);
                     bluetoothManager.sendByte(sendBytes, true);
                 } else {
                     //已经读取完了
+                    isRead = false;
                     LogUtil.d("已经读取完啦");
                     downCallback.onTemplateDownFinish(BluetoothManager.CODE_TEMPLATE_DATA);
                     bluetoothManager.setTemplateScheme(null);

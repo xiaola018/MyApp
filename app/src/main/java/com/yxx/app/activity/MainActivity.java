@@ -101,11 +101,7 @@ public class MainActivity extends AppCompatActivity implements
         initView();
         initViewPager();
 
-        BluetoothManager.get().bindService(this, this);
-        //MainActivity
-        //BluetoothManager
-        //BluetoothService
-        //清单文件
+        BluetoothManager.get().setOnBluetoothListener(this);
     }
 
     private void findView() {
@@ -133,8 +129,9 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         BluetoothManager.get().disconnect();
+        super.onDestroy();
+
     }
 
     private void initViewPager() {
@@ -240,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void connectDevice(DeviceModel deviceModel){
         menuConnectView.showProgressBar(true);
-        BluetoothManager.get().connectGatt(this, deviceModel);
+        BluetoothManager.get().connect(deviceModel);
     }
 
     public void importData(SendInfo sendInfo){
@@ -303,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void closed() {
         LogUtil.d("closed");
+        unconnectState("已断开");
     }
 
     @Override
@@ -324,7 +322,6 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onDeviceAdd(DeviceModel deviceModel) {
-        LogUtil.d("onDeviceAdd");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -356,10 +353,7 @@ public class MainActivity extends AppCompatActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                toolbar.setTitle("已连接");
-                menuConnectView.showProgressBar(false);
-                inputFragment.sendBtnEnable(true);
-                toolbar.setNavigationIcon(R.mipmap.ic_b_c);
+                connectState();
             }
         });
     }
@@ -370,10 +364,7 @@ public class MainActivity extends AppCompatActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                toolbar.setTitle("未连接");
-                menuConnectView.showProgressBar(false);
-                inputFragment.sendBtnEnable(false);
-                toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+                unconnectState("未连接");
             }
         });
     }
@@ -384,10 +375,7 @@ public class MainActivity extends AppCompatActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                toolbar.setTitle("已断开");
-                menuConnectView.showProgressBar(false);
-                inputFragment.sendBtnEnable(false);
-                toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+                unconnectState("已断开");
             }
         });
     }
@@ -410,9 +398,23 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void run() {
                 if(code == BluetoothManager.CODE_PRINT){
-                    ToastUtil.show("发送成功");
+                    ToastUtil.show("发送失败");
                 }
             }
         });
+    }
+
+    private void connectState(){
+        toolbar.setTitle("已连接");
+        menuConnectView.showProgressBar(false);
+        inputFragment.sendBtnEnable(true);
+        toolbar.setNavigationIcon(R.mipmap.ic_b_c);
+    }
+
+    private void unconnectState(String title){
+        toolbar.setTitle(title);
+        menuConnectView.showProgressBar(false);
+        inputFragment.sendBtnEnable(false);
+        toolbar.setNavigationIcon(R.mipmap.ic_b_n);
     }
 }
