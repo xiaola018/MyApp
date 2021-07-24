@@ -214,7 +214,7 @@ public class TemplateScheme {
                 bufferedInputStream = new BufferedInputStream(inputStream);
                 if ((len = bufferedInputStream.read(tempbytes)) != -1) {
                     sendCount++;
-                    LogUtil.d(String.format("发送模板数据第%s次", sendCount + ",耗时：" + (System.currentTimeMillis() - bluetoothManager.startTime)));
+                    LogUtil.d(String.format("发送模板数据第%s次,耗时：%s", sendCount ,(System.currentTimeMillis() - bluetoothManager.startTime)));
 
                     downCallback.onTemplateDownProgress((readLength * 100 / fileLength));
                     byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
