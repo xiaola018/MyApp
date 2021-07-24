@@ -116,7 +116,7 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
         onTemplateDownStart();
         TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA.bin",this);
-        templateScheme.sendStartDownloadCmd();
+        templateScheme.sendHandShakeCmd();
     }
 
     @Override

@@ -48,6 +48,7 @@ public class BluetoothService extends Service {
     //蓝牙的特征值，接收
     private final static String SERVICE_EIGENVALUE_READ = "00002902-0000-1000-8000-00805f9b34fb";
 
+
     private static BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothManager.OnBluetoothListener onBluetoothListener;
@@ -211,7 +212,7 @@ public class BluetoothService extends Service {
                 //蓝牙设备连接状态
                 int status = device.getBondState();
 
-                //    LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
+             //   LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
 
                 DeviceModel deviceModel = new DeviceModel();
                 deviceModel.deviceName = name;
@@ -219,10 +220,10 @@ public class BluetoothService extends Service {
                 deviceModel.mDevice = device;
                 onBluetoothListener.onDeviceAdd(deviceModel);
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                //    LogUtil.d("开始搜索");
+                    LogUtil.d("开始搜索");
                 onBluetoothListener.discoveryStarted();
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                //    LogUtil.d("蓝牙设备搜索完成");
+                    LogUtil.d("蓝牙设备搜索完成");
                 onBluetoothListener.discoveryFinished();
             } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -247,6 +248,7 @@ public class BluetoothService extends Service {
     //</editor-fold>
 
     //<editor-fold desc="蓝牙连接">
+
     public void connectGatt(Context context, DeviceModel deviceModel) {
         Runnable runnable = new Runnable() {
             @Override
@@ -553,10 +555,10 @@ public class BluetoothService extends Service {
      * @param infoList 操作页面下封装好的数据
      */
     public void sendData(List<SendInfo> infoList) {
-        if (!isConnect || !isOpen()) {
+/*        if (!isConnect || !isOpen()) {
             Toast.makeText(MyApplication.getInstance(), "蓝牙未连接", Toast.LENGTH_LONG).show();
             return;
-        }
+        }*/
         this.readCode = BluetoothManager.CODE_PRINT;
         //获取梳理好的字节数据，准备组装发送
         byte[] sendByteArray = ByteUtil.combData(infoList);
