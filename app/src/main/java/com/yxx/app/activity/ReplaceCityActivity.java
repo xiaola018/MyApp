@@ -115,8 +115,8 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         SPUtil.setCheckedCity(cityName);
 
         onTemplateDownStart();
-        TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA.bin",this);
-        templateScheme.sendHandShakeCmd();
+        TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA_3.bin",this);
+        templateScheme.sendStartDownloadCmd();
     }
 
     @Override

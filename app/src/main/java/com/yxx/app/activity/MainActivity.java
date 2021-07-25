@@ -16,6 +16,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,6 +58,9 @@ import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,51 +120,77 @@ public class MainActivity extends AppCompatActivity implements
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         discoveryDialog.setBluetoothCallback(this);
         setSupportActionBar(toolbar);
-    //    abc();
+
+/*        new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                sendByteData();
+            }
+        }.start();*/
+
     }
 
-    private void abc(){
-        byte[] bytes = new byte[]{
-                0x46,(byte)0xb9,0x68,0x00,0x38,0x50,0x01,0x51,0x06,0x20,
-                (byte) 0x93,0x03,0x01,(byte)0xff,(byte)0xff, (byte)0xbf,
-                (byte)0xaf,(byte)0xff,0x00,(byte)0xce,(byte)0xf7,(byte)0xb0,
-                0x73,0x55,0x00,(byte)0xf7,0x64,0x0c,(byte)0x8a,0x16, (byte)0x91,
-                (byte)0xba,0x0e,0x1e,0x1f,(byte)0xff,0x01,0x00,0x00,(byte)0xfe,
-                0x04,(byte)0xa8,0x21,0x04,0x09, (byte)0x80,(byte)0xff,0x60,
-                0x14,0x3c,0x65,(byte)0x81,(byte)0x9b,(byte)0xc6,(byte)0xff,0x15,(byte)0x91,0x16
-        };
-        LogUtil.d("进入方法");
+    InputStream inputStream = null;//模板文件数据流
+    BufferedInputStream bufferedInputStream = null;//缓冲区
+    int fileLength;//文件总长度
+    int readLength,sendCount;
+    byte[] fileBytes = null;
+    private void sendByteData(){
+        byte[] txBuffer = new byte[5];
+        txBuffer[0] = (byte) (readLength == 1 ? 0x22 : 0x02);
+        txBuffer[3] = 0x5a;
+        txBuffer[4] = (byte) 0xa5;
 
-        for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] == (byte) 0xb9 && bytes[i + 1] == (byte) 0x68 && bytes[i + 2] == (byte) 0x00) {
-                int len = bytes[i + 3];//包长度
-                int offSet = i + 4;//开始偏移的起始位置
-                byte verifyH = bytes[bytes.length - 3];
-                byte verifyL = bytes[bytes.length - 2];
-                int recvSum = len + 0x68;
-                byte[] rxbuffer = new byte[bytes.length - offSet - 3];
-                System.arraycopy(bytes, offSet, rxbuffer, 0, rxbuffer.length);
-                for (int j = 0; j < rxbuffer.length; j++) {
-                    String hex = Hex.bytesToHex(new byte[]{rxbuffer[j]});
-                    BigInteger bigInteger = new BigInteger(hex,16);
-                    recvSum += bigInteger.intValue();
-                }
-                byte[] hibyte = ByteUtil.int2BytesHib(recvSum);
-                if(hibyte[0] == verifyH && hibyte[1] == verifyL){
-                    if(rxbuffer[0] == 0x50){
-                        //握手成功,设置波特率
-                        LogUtil.d("握手成功");
-                    }else{
-                        //握手失败
-                    }
-                }else{
-                    //握手失败
-                    LogUtil.d("握手失败");
-                }
-                break;
+
+
+        try {
+            if(inputStream == null){
+                AssetManager manager = MyApplication.getInstance().getResources().getAssets();
+                inputStream = manager.open("bin/JYG_TEST_DATA.bin");
+                //总长度
+                fileLength = inputStream.available();
+                fileBytes = new byte[fileLength];
+                LogUtil.d("数据总长度 ：" + fileLength);
+
             }
+
+            LogUtil.d("readLength = " + readLength);
+            inputStream.skip(readLength);
+            bufferedInputStream = new BufferedInputStream(inputStream);
+            byte[] tempbytes = new byte[128];
+            int len;
+
+            if ((len = bufferedInputStream.read(tempbytes)) != -1) {
+                sendCount++;
+                LogUtil.d(String.format("发送模板数据第%s次", sendCount));
+
+                byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
+                txBuffer[1] = bytesHib[0];
+                txBuffer[2] = bytesHib[1];
+                readLength += len;
+                byte[] sendBytes = new byte[txBuffer.length + len];
+                System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
+                System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, len);
+
+                sendByteData();
+            } else {
+                //已经读取完了
+                LogUtil.d("已经读取完啦");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+/*            try {
+                if (inputStream != null) inputStream.close();
+                if (bufferedInputStream != null) bufferedInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }*/
         }
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

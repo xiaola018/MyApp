@@ -135,7 +135,6 @@ public class BluetoothManager {
     }
 
     public boolean isConnect() {
-        LogUtil.d("isConnected = " + mSocket.isConnected());
         return mSocket != null && mSocket.isConnected();
     }
 
@@ -211,8 +210,6 @@ public class BluetoothManager {
                 String name = device.getName();
                 //蓝牙设备连接状态
                 int status = device.getBondState();
-
-                //   LogUtil.d("device name: " + device.getName() + " address: " + device.getAddress());
 
                 DeviceModel deviceModel = new DeviceModel();
                 deviceModel.deviceName = name;
@@ -312,7 +309,6 @@ public class BluetoothManager {
      * @param buff 发送到模板的数据
      */
     public void sendByte(byte[] buff, boolean addHead) {
-        LogUtil.d("进入发送方法, 数据总长度 == " + buff.length);
         byte[] sendData = buff;
         if (addHead) {
             try {
@@ -340,7 +336,7 @@ public class BluetoothManager {
                 LogUtil.d("添加数据包失败");
             }
         }
-
+        LogUtil.d("准备发送数据，总长度: " + sendData.length);
         try {
             if (mOutputStream == null) {
                 mOutputStream = mSocket.getOutputStream();
@@ -416,7 +412,6 @@ public class BluetoothManager {
             @Override
             public void run() {
                 super.run();
-                LogUtil.d("开启读取线程");
                 try {
                     mInputStream = mSocket.getInputStream();
                 } catch (IOException e) {
@@ -432,9 +427,10 @@ public class BluetoothManager {
                                 byte[] dataBuffer = new byte[len];
                                 if (dataBuffer.length >= 0)
                                     System.arraycopy(rxbuffer, 0, dataBuffer, 0, dataBuffer.length);
-                                LogUtil.d("收到数据 ： " + Hex.bytesToHex(dataBuffer));
+                                LogUtil.d(String.format("收到数据，readCode : %s , Hex = %s", readCode, Hex.bytesToHex(dataBuffer)));
                                 if (templateCallbackNotNull()) {
                                     mTemplateScheme.read(dataBuffer, readCode);
+                                    break;
                                 }
                             }
                         } while (mInputStream.available() != 0);
