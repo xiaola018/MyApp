@@ -9,7 +9,7 @@ import retrofit2.http.GET;
  * Date: 2021/7/13 16:48
  * Description:
  */
-public interface TestInterface {
-    @GET("cityjson")
-    Observable<String> getCall();
+public interface AppInterface {
+    @GET("file/updatelog.json")
+    Observable<String> updateLog();
 }

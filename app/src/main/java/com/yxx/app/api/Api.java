@@ -41,7 +41,7 @@ public class Api {
                 .retryOnConnectionFailure(true)
                 .build();
         mRetrofit = new Retrofit.Builder()
-                .baseUrl("http://pv.sohu.com/")
+                .baseUrl("http://buzhigk.oss-cn-qingdao.aliyuncs.com/")
                 .client(okHttpClient)
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())

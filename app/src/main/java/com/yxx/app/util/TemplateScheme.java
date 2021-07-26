@@ -156,7 +156,7 @@ public class TemplateScheme {
 
     private void sendByteData(){
         byte[] txBuffer = new byte[5];
-        txBuffer[0] = (byte) (readLength == 1 ? 0x22 : 0x02);
+        txBuffer[0] = (byte) (readLength == 0 ? 0x22 : 0x02);
         txBuffer[3] = 0x5a;
         txBuffer[4] = (byte) 0xa5;
         AssetManager manager = MyApplication.getInstance().getResources().getAssets();

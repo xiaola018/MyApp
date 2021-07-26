@@ -7,24 +7,16 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,46 +25,30 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.common.primitives.Bytes;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
 import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.UpdateManager;
-import com.yxx.app.api.Api;
-import com.yxx.app.api.TestInterface;
 import com.yxx.app.bean.DeviceModel;
 import com.yxx.app.bean.SendInfo;
 import com.yxx.app.dialog.DiscoveryBluetoothDialog;
-import com.yxx.app.dialog.LoadingDialog;
 import com.yxx.app.dialog.NeverMenuPopup;
 import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
 import com.yxx.app.fragment.ListFragment;
-import com.yxx.app.util.ByteUtil;
-import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.ToastUtil;
 import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Observer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener ,
@@ -120,77 +96,7 @@ public class MainActivity extends AppCompatActivity implements
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         discoveryDialog.setBluetoothCallback(this);
         setSupportActionBar(toolbar);
-
-/*        new Thread(){
-            @Override
-            public void run() {
-                super.run();
-                sendByteData();
-            }
-        }.start();*/
-
     }
-
-    InputStream inputStream = null;//模板文件数据流
-    BufferedInputStream bufferedInputStream = null;//缓冲区
-    int fileLength;//文件总长度
-    int readLength,sendCount;
-    byte[] fileBytes = null;
-    private void sendByteData(){
-        byte[] txBuffer = new byte[5];
-        txBuffer[0] = (byte) (readLength == 1 ? 0x22 : 0x02);
-        txBuffer[3] = 0x5a;
-        txBuffer[4] = (byte) 0xa5;
-
-
-
-        try {
-            if(inputStream == null){
-                AssetManager manager = MyApplication.getInstance().getResources().getAssets();
-                inputStream = manager.open("bin/JYG_TEST_DATA.bin");
-                //总长度
-                fileLength = inputStream.available();
-                fileBytes = new byte[fileLength];
-                LogUtil.d("数据总长度 ：" + fileLength);
-
-            }
-
-            LogUtil.d("readLength = " + readLength);
-            inputStream.skip(readLength);
-            bufferedInputStream = new BufferedInputStream(inputStream);
-            byte[] tempbytes = new byte[128];
-            int len;
-
-            if ((len = bufferedInputStream.read(tempbytes)) != -1) {
-                sendCount++;
-                LogUtil.d(String.format("发送模板数据第%s次", sendCount));
-
-                byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
-                txBuffer[1] = bytesHib[0];
-                txBuffer[2] = bytesHib[1];
-                readLength += len;
-                byte[] sendBytes = new byte[txBuffer.length + len];
-                System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
-                System.arraycopy(tempbytes, 0, sendBytes, txBuffer.length, len);
-
-                sendByteData();
-            } else {
-                //已经读取完了
-                LogUtil.d("已经读取完啦");
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-/*            try {
-                if (inputStream != null) inputStream.close();
-                if (bufferedInputStream != null) bufferedInputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }*/
-        }
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -344,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements
             menuPopup = new NeverMenuPopup(this);
         }
 
-        int x = metrics.widthPixels - 300;
+        int x = metrics.widthPixels - 500;
         menuPopup.showAsDropDown(toolbar, x, 0, Gravity.NO_GRAVITY);
 
         menuPopup.setOnPopupClickCallbck(new NeverMenuPopup.OnPopupClickCallbck() {

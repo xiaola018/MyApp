@@ -142,6 +142,10 @@ public class BluetoothManager {
         this.readCode = readCode;
     }
 
+    public BluetoothAdapter getBluetoothAdapter() {
+        return mBluetoothAdapter;
+    }
+
     public void startScanBluetooth() {
         // 判断是否在搜索,如果在搜索，就取消搜索
         if (mBluetoothAdapter.isDiscovering()) {
@@ -339,6 +343,10 @@ public class BluetoothManager {
         LogUtil.d("准备发送数据，总长度: " + sendData.length);
         try {
             if (mOutputStream == null) {
+                if(mSocket == null){
+                    onBluetoothListener.onSendFaile(-1, "");
+                    return;
+                }
                 mOutputStream = mSocket.getOutputStream();
             }
             mOutputStream.write(sendData);

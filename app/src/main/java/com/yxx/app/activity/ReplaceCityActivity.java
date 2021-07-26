@@ -64,7 +64,9 @@ public class ReplaceCityActivity extends AppCompatActivity implements
     /**
      * 自定义数据源-省份数据
      */
-    private List<CustomCityData> mProvinceListData = new ArrayList<>();
+    private final List<CustomCityData> mProvinceListData = new ArrayList<>();
+
+    private List<ProInfo> proInfoList;
 
     private WheelView proWheelView;
     private WheelView cityWheelView;
@@ -108,15 +110,22 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         CustomCityData proData = mProvinceListData.get(proWheelView.getCurrentItem());
         String proName = proData.getName();
         String cityName = proData.getList().get(cityWheelView.getCurrentItem()).getName();
-        LogUtil.d(" 省份 : " + proName);
-        LogUtil.d(" 城市 : " + cityName);
-
         SPUtil.setCheckedProvince(proName);
         SPUtil.setCheckedCity(cityName);
 
-        onTemplateDownStart();
-        TemplateScheme templateScheme = new TemplateScheme("bin/JYG_TEST_DATA_3.bin",this);
-        templateScheme.sendStartDownloadCmd();
+        try {
+            String fileName = proInfoList.get(proWheelView.getCurrentItem()).getCities().get(cityWheelView.getCurrentItem()).getFile();
+            if(!TextUtils.isEmpty(fileName)){
+                onTemplateDownStart();
+                TemplateScheme templateScheme = new TemplateScheme(fileName,this);
+                templateScheme.sendStartDownloadCmd();
+            }else{
+                ToastUtil.show("模板文件不存在");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            ToastUtil.show("模板文件错误");
+        }
     }
 
     @Override
@@ -202,7 +211,7 @@ public class ReplaceCityActivity extends AppCompatActivity implements
                     while ((str = bufReader.readLine()) != null) {
                         stringBuffer.append(str);
                     }
-                    List<ProInfo> proInfoList = JsonUtils.fromJsonArray(stringBuffer.toString(), ProInfo.class);
+                    proInfoList = JsonUtils.fromJsonArray(stringBuffer.toString(), ProInfo.class);
 
                     for (ProInfo proInfo : proInfoList) {
                         CustomCityData pro = new CustomCityData(proInfo.getId(), proInfo.getName());

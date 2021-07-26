@@ -14,6 +14,8 @@ public class ProInfo implements Serializable {
 
     private String name;
 
+    private String file;
+
     private List<ProInfo> cities;
 
     public String getId() {
@@ -30,6 +32,14 @@ public class ProInfo implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
     }
 
     public List<ProInfo> getCities() {

@@ -2,8 +2,6 @@ package com.yxx.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -11,10 +9,11 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.yxx.app.api.Api;
-import com.yxx.app.api.TestInterface;
+import com.yxx.app.api.AppInterface;
 import com.yxx.app.bean.VersionInfo;
 import com.yxx.app.dialog.ApkDownloadDialog;
 import com.yxx.app.dialog.LoadingDialog;
+import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
 
 import java.util.Locale;
@@ -38,7 +37,7 @@ public class UpdateManager {
             loadingDialog.show();
         }
         LoadingDialog finalProgressDialog = loadingDialog;
-        Api.get().create(TestInterface.class).getCall()
+        Api.get().create(AppInterface.class).updateLog()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<String>() {
@@ -50,11 +49,7 @@ public class UpdateManager {
                     @Override
                     public void onNext(@io.reactivex.annotations.NonNull String s) {
                         LogUtil.d("请求成功 : " + s);
-                        VersionInfo versionInfo = new VersionInfo();
-                        versionInfo.setVersionName("1.0");
-                        versionInfo.setApkInstall(1);
-                        versionInfo.setUpdateLog("哈哈哈哈");
-                        versionInfo.setDownloadUrl("http://gkimg.cdn.midasjoy.com/app/5.4/app-buzhigk-5.4.2.apk");
+                        VersionInfo versionInfo = JsonUtils.fromJson(s, VersionInfo.class);
                         if (isNewVersion(versionInfo.getVersionName())) {
                             showUpdateLogDialog(context, versionInfo);
                         }else{

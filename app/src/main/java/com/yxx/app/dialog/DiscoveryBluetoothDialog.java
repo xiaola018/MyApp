@@ -1,6 +1,7 @@
 package com.yxx.app.dialog;
 
 import android.app.Dialog;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -38,6 +39,7 @@ public class DiscoveryBluetoothDialog extends Dialog {
     private RecyclerView mRecyclerView;
     private Button btn_cancel;
     private TextView tv_no_data;
+    private RecyclerView bondedRecyclerView;
 
     private DeviceListAdapter mAdapter;
 
@@ -80,6 +82,7 @@ public class DiscoveryBluetoothDialog extends Dialog {
     }
 
     private void initView(){
+        bondedRecyclerView = findViewById(R.id.bondedRecyclerView);
         mProgressBar = findViewById(R.id.progressBar);
         mRecyclerView = findViewById(R.id.recyclerView);
         btn_cancel = findViewById(R.id.btn_cancel);
@@ -102,14 +105,30 @@ public class DiscoveryBluetoothDialog extends Dialog {
             mAdapter.getData().clear();
             mAdapter.notifyDataSetChanged();
         }
+        Set<BluetoothDevice> devices = BluetoothManager.get().getBluetoothAdapter().getBondedDevices();
+        List<DeviceModel> models = new ArrayList<>();
+        for(BluetoothDevice device : devices){
+            DeviceModel model = new DeviceModel();
+            model.mDevice = device;
+            model.deviceName = device.getName();
+            model.address = device.getAddress();
+            models.add(model);
+        }
+        setBoundedAdapter(models);
         mProgressBar.setVisibility(View.VISIBLE);
         BluetoothManager.get().startScanBluetooth();
     }
 
+    private void setBoundedAdapter(List<DeviceModel> deviceModelList){
+        DeviceListAdapter mAdapter = new DeviceListAdapter(deviceModelList);
+        bondedRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        bondedRecyclerView.setAdapter(mAdapter);
+    }
+
     public void discoveryFinished(){
-        mProgressBar.setVisibility(View.GONE);
-        if(mAdapter.getData() == null || mAdapter.getData().size() == 0){
-            tv_no_data.setVisibility(View.VISIBLE);
+        if(mProgressBar != null)mProgressBar.setVisibility(View.GONE);
+        if(mAdapter == null || mAdapter.getData() == null || mAdapter.getData().size() == 0){
+            if(tv_no_data != null)tv_no_data.setVisibility(View.VISIBLE);
         }
     }
 
