@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import com.yxx.app.R;
+import com.yxx.app.activity.ReplaceCityActivity;
 import com.yxx.app.download.DownLoadHelper;
 import com.yxx.app.download.DownloadListener;
 import com.yxx.app.util.LogUtil;
@@ -39,6 +40,8 @@ public class ApkDownloadDialog extends Dialog {
 
     private TextView tvProgressNum;
     private ProgressBar mProgressBar;
+
+    private boolean isFinish;
 
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
@@ -74,8 +77,7 @@ public class ApkDownloadDialog extends Dialog {
         mProgressBar.setProgress(progress);
     }
 
-    public void download(){
-        String url = "http://gkimg.cdn.midasjoy.com/app/5.4/app-buzhigk-5.4.2.apk";
+    public void download(String url){
         ContextWrapper cw = new ContextWrapper(context);
         File directory = cw.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
         DownLoadHelper.getInstance().addDownLoadListener(new MyDownloadListener());
@@ -104,7 +106,16 @@ public class ApkDownloadDialog extends Dialog {
         @Override
         public void onFinishDownload(String tag, File file) {
             LogUtil.d("下载完成");
-            installAPK(context, file);
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(!isFinish){
+                        installAPK(context, file);
+                        isFinish = false;
+                    }
+                }
+            });
+
         }
 
         @Override
@@ -121,6 +132,7 @@ public class ApkDownloadDialog extends Dialog {
     }
 
     public void installAPK(Context activity, File apkFile) {
+        if(activity != null && isShowing())dismiss();
         Intent intent = new Intent(Intent.ACTION_VIEW);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

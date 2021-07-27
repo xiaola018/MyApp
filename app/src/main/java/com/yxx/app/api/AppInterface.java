@@ -10,6 +10,6 @@ import retrofit2.http.GET;
  * Description:
  */
 public interface AppInterface {
-    @GET("file/updatelog.json")
+    @GET("BluApp/upgrade.log")
     Observable<String> updateLog();
 }

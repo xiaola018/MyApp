@@ -16,6 +16,10 @@ import com.yxx.app.dialog.LoadingDialog;
 import com.yxx.app.util.JsonUtils;
 import com.yxx.app.util.LogUtil;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import io.reactivex.Observer;
@@ -48,18 +52,27 @@ public class UpdateManager {
 
                     @Override
                     public void onNext(@io.reactivex.annotations.NonNull String s) {
-                        LogUtil.d("请求成功 : " + s);
-                        VersionInfo versionInfo = JsonUtils.fromJson(s, VersionInfo.class);
-                        if (isNewVersion(versionInfo.getVersionName())) {
-                            showUpdateLogDialog(context, versionInfo);
-                        }else{
-                            if(!isAuto) Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show();
+                        if(finalProgressDialog != null)
+                            finalProgressDialog.dismiss();
+                        try {
+                            LogUtil.d("请求成功 : " + s);
+                            VersionInfo versionInfo = JsonUtils.fromJson(s, VersionInfo.class);
+                            if (isNewVersion(versionInfo.getVersionName())) {
+                                showUpdateLogDialog(context, versionInfo);
+                            }else{
+                                if(!isAuto) Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
+
                     }
 
                     @Override
                     public void onError(@io.reactivex.annotations.NonNull Throwable e) {
                         LogUtil.d("请求失败 : " + e.getMessage());
+                        if(finalProgressDialog != null)
+                            finalProgressDialog.dismiss();
                     }
 
                     @Override
@@ -72,7 +85,7 @@ public class UpdateManager {
 
     public static void showUpdateLogDialog(Activity activity, VersionInfo versionInfo){
         AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-                .setTitle(String.format("是否更新到%s版本", versionInfo.getVersionName()))
+                .setTitle(String.format("是否更新到v%s版本", versionInfo.getVersionName()))
                 .setMessage(versionInfo.getUpdateLog());
         builder.setPositiveButton("更新", new DialogInterface.OnClickListener() {
             @Override
@@ -80,7 +93,7 @@ public class UpdateManager {
                 dialogInterface.dismiss();
                 ApkDownloadDialog downloadDialog = new ApkDownloadDialog(activity);
                 downloadDialog.show();
-                downloadDialog.download();
+                downloadDialog.download(versionInfo.getDownloadUrl());
             }
         });
         if(versionInfo.getApkInstall() == 1){
