@@ -1,48 +1,37 @@
 package com.yxx.app.activity;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.lljjcoder.Interface.OnCustomCityPickerItemClickListener;
 import com.lljjcoder.bean.CustomCityData;
-import com.lljjcoder.citywheel.CityConfig;
-import com.lljjcoder.citywheel.CustomConfig;
-import com.lljjcoder.style.citycustome.CustomCityPicker;
-import com.lljjcoder.style.citypickerview.CityPickerView;
-import com.lljjcoder.style.citypickerview.widget.wheel.OnWheelChangedListener;
 import com.lljjcoder.style.citypickerview.widget.wheel.WheelView;
 import com.lljjcoder.style.citypickerview.widget.wheel.adapters.ArrayWheelAdapter;
 import com.yxx.app.BluetoothManager;
-import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.bean.ProInfo;
-import com.yxx.app.dialog.NeverMenuPopup;
-import com.yxx.app.util.ByteUtil;
 import com.yxx.app.util.JsonUtils;
-import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
 import com.yxx.app.util.TemplateScheme;
 import com.yxx.app.util.ToastUtil;
-import com.yxx.app.view.MenuConnectView;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -224,6 +213,11 @@ public class ReplaceCityActivity extends AppCompatActivity implements
                         mProvinceListData.add(pro);
                     }
 
+                    Comparator comparator = Collator.getInstance(Locale.CHINA);
+                    Collections.sort(mProvinceListData, (p1, p2) -> {
+                        return comparator.compare(p1.getName(), p2.getName());
+                    });
+
                     emitter.onNext(mProvinceListData);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -265,6 +259,11 @@ public class ReplaceCityActivity extends AppCompatActivity implements
             arrayWheelAdapter.setItemResource(R.layout.default_item_city);
             arrayWheelAdapter.setItemTextResource(R.id.default_item_city_name_tv);
         }*/
+        arrayWheelAdapter.setTextColor(Color.parseColor("#010101"));
+        arrayWheelAdapter.setTextSize(25);
+    //    arrayWheelAdapter.setItemResource(R.layout.item_custome_city);
+    //    arrayWheelAdapter.setItemTextResource(R.id.item_custome_city_name_tv);
+   //     R.layout.default_item_city
         proWheelView.setViewAdapter(arrayWheelAdapter);
         //获取上一次选中的省份
         String proName = SPUtil.getCheckedProvince();
@@ -299,28 +298,12 @@ public class ReplaceCityActivity extends AppCompatActivity implements
         if (pCityList == null) return;
 
 
-        //设置最初的默认城市
-/*        int cityDefault = -1;
-        if (!TextUtils.isEmpty(config.getDefaultCityName()) && pCityList.size() > 0) {
-            for (int i = 0; i < pCityList.size(); i++) {
-                if (pCityList.get(i).getName().startsWith(config.getDefaultCityName())) {
-                    cityDefault = i;
-                    break;
-                }
-            }
-        }*/
-
-
         ArrayWheelAdapter cityWheel = new ArrayWheelAdapter<CustomCityData>(this, pCityList);
         //自定义item
-/*        if (config.getCustomItemLayout() != CityConfig.NONE && config.getCustomItemTextViewId() != CityConfig.NONE) {
-            cityWheel.setItemResource(config.getCustomItemLayout());
-            cityWheel.setItemTextResource(config.getCustomItemTextViewId());
-        } else {
-            cityWheel.setItemResource(R.layout.default_item_city);
-            cityWheel.setItemTextResource(R.id.default_item_city_name_tv);
-        }*/
-
+        cityWheel.setTextColor(Color.parseColor("#010101"));
+        cityWheel.setTextSize(25);
+        //cityWheel.setItemResource(R.layout.item_custome_city);
+        //cityWheel.setItemTextResource(R.id.item_custome_city_name_tv);
         cityWheelView.setCyclic(false);
         cityWheelView.setViewAdapter(cityWheel);
         cityWheelView.setVisibleItems(5);
