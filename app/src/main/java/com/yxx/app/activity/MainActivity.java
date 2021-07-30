@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.BluetoothManagerBle;
 import com.yxx.app.MyApplication;
 import com.yxx.app.R;
 import com.yxx.app.UpdateManager;
@@ -82,7 +83,8 @@ public class MainActivity extends AppCompatActivity implements
         initView();
         initViewPager();
 
-        BluetoothManager.get().setOnBluetoothListener(this);
+    //    BluetoothManager.get().setOnBluetoothListener(this);
+        BluetoothManager.get().bindService(this, this);
     }
 
     private void findView() {
@@ -366,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(code == BluetoothManager.CODE_PRINT){
+                if(code == BluetoothManagerBle.CODE_PRINT){
                     ToastUtil.show("发送成功");
                 }
             }
@@ -378,7 +380,7 @@ public class MainActivity extends AppCompatActivity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(code == BluetoothManager.CODE_PRINT){
+                if(code == BluetoothManagerBle.CODE_PRINT){
                     ToastUtil.show("发送失败");
                 }
             }

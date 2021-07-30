@@ -54,8 +54,8 @@
         </provider>
 
 
-        <service android:name=".BluetoothService">
-        </service>
+        <service android:name=".BluetoothServiceBle"/>
+        <service android:name=".BluetoothService"/>
     </application>
 
 </manifest>

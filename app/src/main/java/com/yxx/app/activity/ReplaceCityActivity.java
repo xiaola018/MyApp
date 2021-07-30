@@ -1,6 +1,5 @@
 package com.yxx.app.activity;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,6 +16,7 @@ import com.lljjcoder.bean.CustomCityData;
 import com.lljjcoder.style.citypickerview.widget.wheel.WheelView;
 import com.lljjcoder.style.citypickerview.widget.wheel.adapters.ArrayWheelAdapter;
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.BluetoothManagerBle;
 import com.yxx.app.R;
 import com.yxx.app.bean.ProInfo;
 import com.yxx.app.util.JsonUtils;
@@ -145,7 +145,7 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
     @Override
     public void onTemplateDownFail(int code, String msg) {
-        if(code != BluetoothManager.CODE_PRINT){
+        if(code != BluetoothManagerBle.CODE_PRINT){
             Message message = new Message();
             message.arg1 = code;
             message.obj = msg;

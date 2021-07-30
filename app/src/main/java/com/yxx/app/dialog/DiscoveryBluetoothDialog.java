@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.BluetoothManagerBle;
 import com.yxx.app.R;
 import com.yxx.app.bean.DeviceModel;
 

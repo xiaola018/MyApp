@@ -19,17 +19,13 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.gson.Gson;
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.BluetoothManagerBle;
 import com.yxx.app.R;
 import com.yxx.app.bean.SendInfo;
-import com.yxx.app.util.Hex;
 import com.yxx.app.util.JsonUtils;
-import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.SPUtil;
 import com.yxx.app.util.TimeUtil;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,7 +3,6 @@ package com.yxx.app.fragment;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,21 +19,17 @@ import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import com.yxx.app.BluetoothManager;
+import com.yxx.app.BluetoothManagerBle;
 import com.yxx.app.R;
 import com.yxx.app.activity.MainActivity;
 import com.yxx.app.bean.SendInfo;
-import com.yxx.app.util.LogUtil;
-import com.yxx.app.util.MatcherUtil;
 import com.yxx.app.util.TimeUtil;
 import com.yxx.app.util.ToastUtil;
 
-import java.sql.Time;
 import java.util.Calendar;
-import java.util.List;
 
 /**
  * Author: yangxl
