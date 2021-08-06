@@ -40,6 +40,7 @@ public class BluetoothManager {
     private static BluetoothManager mBluetoothManager;
 
     private BluetoothService mService;
+    private SerConn serConn;
 
     public static BluetoothManager get() {
         if (mBluetoothManager == null) mBluetoothManager = new BluetoothManager();
@@ -50,57 +51,68 @@ public class BluetoothManager {
     }
 
     public void bindService(Context context, OnBluetoothListener listener){
+        setOnBluetoothListener(listener);
         Intent intent = new Intent(context, BluetoothService.class);
-        context.bindService(intent, new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-                BluetoothService.MyBinder binder = (BluetoothService.MyBinder) iBinder;
-                mService = binder.getService();
-                mService.setOnBluetoothListener(listener);
-            }
+        context.bindService(intent, serConn = new SerConn(listener), Context.BIND_AUTO_CREATE);
+    }
 
-            @Override
-            public void onServiceDisconnected(ComponentName componentName) {
+    class SerConn implements ServiceConnection {
 
-            }
-        }, Context.BIND_AUTO_CREATE);
+        OnBluetoothListener listener;
+
+        public SerConn(OnBluetoothListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            BluetoothService.MyBinder binder = (BluetoothService.MyBinder) iBinder;
+            mService = binder.getService();
+            mService.setOnBluetoothListener(listener);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
+        }
     }
 
     public void setOnBluetoothListener(OnBluetoothListener onBluetoothListener) {
-        mService.setOnBluetoothListener(onBluetoothListener);
+
+        if(mService != null)mService.setOnBluetoothListener(onBluetoothListener);
     }
 
     //<editor-fold desc="蓝牙状态">
     public void openBluetooth() {
-        mService.openBluetooth();
+        if(mService != null)mService.openBluetooth();
     }
 
     public boolean isSupport() {
-        return mService.isSupport();
+        return mService != null && mService.isSupport();
     }
 
     public boolean isOpen() {
-        return mService.isOpen();
+        return mService != null && mService.isOpen();
     }
 
     public boolean isConnect() {
-        return mService.isConnect();
+        return mService != null && mService.isConnect();
     }
 
     public void setReadCode(int readCode) {
-        mService.setReadCode(readCode);
+        if(mService != null)mService.setReadCode(readCode);
     }
 
     public BluetoothAdapter getBluetoothAdapter() {
-        return mService.getBluetoothAdapter();
+        return BluetoothAdapter.getDefaultAdapter();
     }
 
     public void startScanBluetooth() {
-        mService.startScanBluetooth();
+        if(mService != null)mService.startScanBluetooth();
     }
 
     public void cancelDiscovery() {
-        mService.cancelDiscovery();
+        if(mService != null)mService.cancelDiscovery();
     }
 
     /**
@@ -113,15 +125,17 @@ public class BluetoothManager {
 
     //<editor-fold desc="连接蓝牙">
     public void connect(DeviceModel deviceModel) {
-        mService.connect(deviceModel);
+        if(mService != null)mService.connect(deviceModel);
     }
 
     /**
      * 断开连接
      */
-    public void disconnect() {
-        mService.disconnect();
-
+    public void disconnect(Context context) {
+        if(mService != null){
+            mService.disconnect();
+            if(context != null)context.unbindService(serConn);
+        }
     }
     //</editor-fold>
 
@@ -133,7 +147,11 @@ public class BluetoothManager {
      * @param buff 发送到模板的数据
      */
     public void sendByte(byte[] buff, boolean addHead) {
-        mService.sendByte(buff,addHead);
+        if(mService != null)mService.sendByte(buff,addHead);
+    }
+
+    public void wirteTempData(byte[] buff){
+        if(mService != null)mService.wirteTempData(buff);
     }
 
     /**
@@ -151,7 +169,7 @@ public class BluetoothManager {
      * @param buff 发送到模板的数据
      */
     public void sendThread(byte[] buff, boolean addHead) {
-        mService.sendThread(buff,addHead);
+        if(mService != null)mService.sendThread(buff,addHead);
     }
 
 
@@ -172,7 +190,7 @@ public class BluetoothManager {
      * @param infoList 操作页面下封装好的数据
      */
     public void sendData(List<SendInfo> infoList) {
-        mService.sendData(infoList);
+        if(mService != null)mService.sendData(infoList);
     }
     //</editor-fold>
 
@@ -180,7 +198,7 @@ public class BluetoothManager {
      * 开启模板数据下载协议
      */
     public void setTemplateScheme(TemplateScheme templateScheme) {
-        mService.setTemplateScheme(templateScheme);
+        if(mService != null)mService.setTemplateScheme(templateScheme);
     }
 
     //<editor-fold desc="监听回调">

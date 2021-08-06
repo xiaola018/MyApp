@@ -31,6 +31,7 @@
         android:theme="@style/Theme.MyApp">
         <activity android:name=".activity.MainActivity"
             android:screenOrientation="portrait"
+            android:theme="@style/Theme.MyApp"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,8 +40,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.GenerateActivity"
+            android:theme="@style/Theme.MyApp"
             android:screenOrientation="portrait"/>
         <activity android:name=".activity.ReplaceCityActivity"
+            android:theme="@style/Theme.MyApp"
             android:screenOrientation="portrait"/>
 
         <provider

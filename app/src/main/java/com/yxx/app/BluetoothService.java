@@ -11,8 +11,10 @@ import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.yxx.app.bean.DeviceModel;
@@ -75,6 +77,8 @@ public class BluetoothService extends Service {
     public BluetoothSocket mSocket;
     private OutputStream mOutputStream;
     private InputStream mInputStream;
+
+    private MyHandler mHandler = new MyHandler();
 
     private BluetoothManager.OnBluetoothListener onBluetoothListener;
 
@@ -246,31 +250,39 @@ public class BluetoothService extends Service {
     //<editor-fold desc="连接蓝牙">
     public void connect(DeviceModel deviceModel) {
         BluetoothDevice device = deviceModel.mDevice;
-        try {
-            mSocket = device.createRfcommSocketToServiceRecord(UUID.fromString(MY_UUID));
-            if (mSocket != null) {
+        new Thread(){
+            @Override
+            public void run() {
+                super.run();
                 try {
-                    mSocket.connect();
-                    onBluetoothListener.onConnectSuccess();
-                    readThread();
+                    mSocket = device.createRfcommSocketToServiceRecord(UUID.fromString(MY_UUID));
+                    if (mSocket != null) {
+                        try {
+                            mSocket.connect();
+                            onBluetoothListener.onConnectSuccess();
+                            mOutputStream = mSocket.getOutputStream();
+                            readThread();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            try {
+                                mSocket.close();
+                                mSocket = null;
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                            }
+                            onBluetoothListener.onConnectError();
+                        }
+                    } else {
+                        onBluetoothListener.onConnectError();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    try {
-                        mSocket.close();
-                        mSocket = null;
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
+                    //连接失败
                     onBluetoothListener.onConnectError();
                 }
-            } else {
-                onBluetoothListener.onConnectError();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            //连接失败
-            onBluetoothListener.onConnectError();
-        }
+        }.start();
+
     }
 
     /**
@@ -307,43 +319,40 @@ public class BluetoothService extends Service {
      * @param buff 发送到模板的数据
      */
     public void sendByte(byte[] buff, boolean addHead) {
-        byte[] sendData = buff;
-        if (addHead) {
-            try {
-                byte[] dataCommByte = new byte[8 + sendData.length];
-                dataCommByte[0] = 0x46;
-                dataCommByte[1] = (byte) 0xb9;
-                dataCommByte[2] = (byte) 0x6a;
-                dataCommByte[3] = 0x00;
-                int len = sendData.length + 6;//长度
-                dataCommByte[4] = ByteUtil.int2Byte(len);
-                int sum = len + new BigInteger("6a", 16).intValue();
-                for (int i = 0; i < sendData.length; i++) {
-                    sum += new BigInteger(Hex.bytesToHex(new byte[]{sendData[i]}), 16).intValue();
-                    dataCommByte[i + 5] = sendData[i];
-                }
-                byte[] hibyte = ByteUtil.int2BytesHib(sum);
-                dataCommByte[dataCommByte.length - 3] = hibyte[0];
-                dataCommByte[dataCommByte.length - 2] = hibyte[1];
-                dataCommByte[dataCommByte.length - 1] = 0x16;//结尾
-
-
-                sendData = dataCommByte;
-            } catch (Exception e) {
-                e.printStackTrace();
-                LogUtil.d("添加数据包失败");
-            }
+        if (mSocket == null) {
+            onBluetoothListener.onSendFaile(-1, "");
+            return;
         }
-        LogUtil.d("准备发送数据，总长度: " + sendData.length);
         try {
-            if (mOutputStream == null) {
-                if(mSocket == null){
-                    onBluetoothListener.onSendFaile(-1, "");
-                    return;
+            byte[] sendData = buff;
+            if (addHead) {
+                try {
+                    byte[] dataCommByte = new byte[8 + sendData.length];
+                    mOutputStream.write((byte) 0x46);
+                    mOutputStream.write((byte) 0xb9);
+                    mOutputStream.write((byte) 0x6a);
+                    mOutputStream.write((byte) 0x00);
+                    mOutputStream.flush();
+                    int len = sendData.length + 6;//长度
+                    dataCommByte[4] = ByteUtil.int2Byte(len);
+                    mOutputStream.write(dataCommByte[4]);
+                    int sum = len + new BigInteger("6a", 16).intValue();
+                    for (byte sendDatum : sendData) {
+                        sum += (sendDatum & 0xFF);
+                        mOutputStream.write(sendDatum);
+                    }
+                    byte[] hibyte = ByteUtil.int2BytesHib(sum);
+                    mOutputStream.write(hibyte[0]);
+                    mOutputStream.write(hibyte[1]);
+                    mOutputStream.write((byte) 0x16);
+                    sendData = dataCommByte;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LogUtil.d("添加数据包失败");
                 }
-                mOutputStream = mSocket.getOutputStream();
+            } else {
+                mOutputStream.write(sendData);
             }
-            mOutputStream.write(sendData);
             mOutputStream.flush();
             LogUtil.d("数据发送成功");
             //数据发送成功了
@@ -354,6 +363,52 @@ public class BluetoothService extends Service {
             onBluetoothListener.onSendFaile(readCode, "");
         }
 
+    }
+
+    public void wirteTempData(byte[] buff) {
+        mHandler.removeMessages(0);
+        if (mSocket == null) {
+            onBluetoothListener.onSendFaile(-1, "");
+            return;
+        }
+        try {
+            mOutputStream.write((byte) 0x46);
+            mOutputStream.write((byte) 0xb9);
+            mOutputStream.write((byte) 0x6a);
+            mOutputStream.write((byte) 0x00);
+            mOutputStream.flush();
+            int len = buff.length + 6;//长度
+            mOutputStream.write(ByteUtil.int2Byte(len));
+            int sum = len + new BigInteger("6a", 16).intValue();
+            for (byte sendDatum : buff) {
+                sum += (sendDatum & 0xFF);
+                mOutputStream.write(sendDatum);
+                mOutputStream.flush();
+            }
+            byte[] hibyte = ByteUtil.int2BytesHib(sum);
+            mOutputStream.write(hibyte[0]);
+            mOutputStream.write(hibyte[1]);
+            mOutputStream.write((byte) 0x16);
+            mOutputStream.flush();
+            LogUtil.d("数据发送成功");
+            //数据发送成功了
+            onBluetoothListener.onSendSuccess(readCode);
+            mHandler.sendEmptyMessageDelayed(0, 50);
+        } catch (IOException e) {
+            e.printStackTrace();
+            LogUtil.d("数据发送失败");
+            onBluetoothListener.onSendFaile(readCode, "");
+        }
+    }
+
+    class MyHandler extends Handler {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 0) {
+                wirteTempData(new byte[]{});
+            }
+        }
     }
 
     /**
@@ -427,12 +482,13 @@ public class BluetoothService extends Service {
                         int len;
                         while ((len = mInputStream.read(rxbuffer)) != -1) {
                             byte[] dataBuffer = new byte[len];
-                            if (dataBuffer.length >= 0)
+                            if (dataBuffer.length > 0) {
                                 System.arraycopy(rxbuffer, 0, dataBuffer, 0, dataBuffer.length);
-                            LogUtil.d(String.format("收到数据，readCode : %s , Hex = %s", readCode, Hex.bytesToHex(dataBuffer)));
-                            if (templateCallbackNotNull()) {
-                                mTemplateScheme.read(dataBuffer, readCode);
-                                break;
+                                LogUtil.d(String.format("收到数据，readCode : %s , Hex = %s", readCode, Hex.bytesToHex(dataBuffer)));
+                                if (templateCallbackNotNull()) {
+                                    mTemplateScheme.read(dataBuffer, readCode);
+                                    break;
+                                }
                             }
                         }
                     } catch (IOException e) {

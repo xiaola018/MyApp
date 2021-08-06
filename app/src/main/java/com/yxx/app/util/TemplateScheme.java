@@ -172,10 +172,8 @@ public class TemplateScheme {
 
             byte[] tempbytes = new byte[110];
             int len = 0;
-            if ((readLength = bufferedInputStream.read(tempbytes)) != -1) {
+            if ((len = bufferedInputStream.read(tempbytes)) != -1) {
                 sendCount++;
-
-
                 byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
                 txBuffer[1] = bytesHib[0];
                 txBuffer[2] = bytesHib[1];
@@ -186,7 +184,7 @@ public class TemplateScheme {
 
                 //发送模板数据
                 bluetoothManager.setReadCode(BluetoothManagerBle.CODE_TEMPLATE_DATA);
-                bluetoothManager.sendByte(sendBytes, true);
+                bluetoothManager.wirteTempData(sendBytes);
                 downCallback.onTemplateDownProgress((readLength * 100 / fileLength));
             } else {
                 try {

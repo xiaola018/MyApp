@@ -110,7 +110,7 @@ public class InputFragment extends Fragment implements View.OnClickListener {
     }
 
     public void sendBtnEnable(boolean enable){
-        btn_send.setEnabled(enable);
+        if(btn_send != null)btn_send.setEnabled(enable);
     }
 
     private void initData(){

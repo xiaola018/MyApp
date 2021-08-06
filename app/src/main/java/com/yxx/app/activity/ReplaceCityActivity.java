@@ -76,7 +76,6 @@ public class ReplaceCityActivity extends AppCompatActivity implements
 
     private void initView() {
         toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
         proWheelView = findViewById(R.id.proWheelView);
         cityWheelView = findViewById(R.id.cityWheelView);
         proWheelView = findViewById(R.id.proWheelView);

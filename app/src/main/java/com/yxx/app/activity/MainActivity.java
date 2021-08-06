@@ -2,6 +2,7 @@ package com.yxx.app.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
@@ -15,9 +16,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -39,13 +43,19 @@ import com.yxx.app.fragment.BaseFragmentStateAdapter;
 import com.yxx.app.fragment.ImportFragment;
 import com.yxx.app.fragment.InputFragment;
 import com.yxx.app.fragment.ListFragment;
+import com.yxx.app.util.ByteUtil;
+import com.yxx.app.util.Hex;
 import com.yxx.app.util.LogUtil;
 import com.yxx.app.util.ToastUtil;
 import com.yxx.app.view.MenuConnectView;
 import com.yxx.widget.TabLayout;
 import com.yxx.widget.TabLayoutMediator;
 
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.reactivex.Observer;
@@ -73,11 +83,15 @@ public class MainActivity extends AppCompatActivity implements
 
     private DiscoveryBluetoothDialog discoveryDialog;
 
+    private long backTime;
+
+    private MyHandler mHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        mHandler = new MyHandler(this);
         findView();
 
         initView();
@@ -85,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements
 
     //    BluetoothManager.get().setOnBluetoothListener(this);
         BluetoothManager.get().bindService(this, this);
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
     }
 
     private void findView() {
@@ -97,22 +113,22 @@ public class MainActivity extends AppCompatActivity implements
     private void initView() {
         discoveryDialog = new DiscoveryBluetoothDialog(this);
         discoveryDialog.setBluetoothCallback(this);
-        setSupportActionBar(toolbar);
-    }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
         toolbar.inflateMenu(R.menu.menu_home);
         toolbar.setOnMenuItemClickListener(this);
         MenuItem menuItem = toolbar.getMenu().findItem(R.id.menu_connect);
         menuConnectView = (MenuConnectView) menuItem.getActionView();
         menuConnectView.setOnClickListener(v -> checkPermis());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     protected void onDestroy() {
-        BluetoothManager.get().disconnect();
+        BluetoothManager.get().disconnect(this);
         super.onDestroy();
 
     }
@@ -283,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void closed() {
         LogUtil.d("closed");
-        unconnectState("已断开");
+        mHandler.sendEmptyMessage(1008);
     }
 
     @Override
@@ -333,34 +349,19 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnectSuccess() {
         LogUtil.d("onConnectSuccess");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                connectState();
-            }
-        });
+        mHandler.sendEmptyMessage(1005);
     }
 
     @Override
     public void onConnectError() {
         LogUtil.d("onConnectError");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                unconnectState("未连接");
-            }
-        });
+        mHandler.sendEmptyMessage(1009);
     }
 
     @Override
     public void onStateDisconnected() {
         LogUtil.d("onStateDisconnected");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                unconnectState("已断开");
-            }
-        });
+        mHandler.sendEmptyMessage(1008);
     }
 
     @Override
@@ -399,5 +400,45 @@ public class MainActivity extends AppCompatActivity implements
         menuConnectView.showProgressBar(false);
         inputFragment.sendBtnEnable(false);
         toolbar.setNavigationIcon(R.mipmap.ic_b_n);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (System.currentTimeMillis() - backTime < 2000L) {
+            super.onBackPressed();
+            System.exit(0);
+        } else {
+            ToastUtil.show("再按一次退出程序");
+            backTime = System.currentTimeMillis();
+        }
+    }
+
+    private static class MyHandler extends Handler {
+
+        private WeakReference<MainActivity> weakReference;
+
+        public MyHandler(MainActivity activity) {
+            this.weakReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if(weakReference.get() != null){
+                MainActivity activity = weakReference.get();
+                switch (msg.what){
+                    case 1005:
+                        activity.connectState();
+                        break;
+                    case 1008:
+                        activity.unconnectState("已断开");
+                        break;
+                    case 1009:
+                        ToastUtil.show("连接错误，请确认蓝牙设备已打开");
+                        activity.unconnectState("未连接");
+                        break;
+                }
+            }
+        }
     }
 }
