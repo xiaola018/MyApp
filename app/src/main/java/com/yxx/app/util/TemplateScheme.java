@@ -102,13 +102,12 @@ public class TemplateScheme {
      */
     public void sendSetBaudCmd() {
         LogUtil.d("下发设置参数指令");
-        byte[] baudBytes = ByteUtil.int2BytesHib(BAUD);
         byte[] txBuffer = new byte[8];
         txBuffer[0] = 0x01;
         txBuffer[1] = argBuffer;
         txBuffer[2] = 0x40;
-        txBuffer[3] = (byte)0xff;
-        txBuffer[4] = (byte)0xcc;
+        txBuffer[3] = (byte) (BAUD >>> 8);
+        txBuffer[4] = (byte) BAUD & 0xFF;
         txBuffer[5] = 0x00;
         txBuffer[6] = 0x00;
         txBuffer[7] = (byte) 0x97;
@@ -174,9 +173,9 @@ public class TemplateScheme {
             int len = 0;
             if ((len = bufferedInputStream.read(tempbytes)) != -1) {
                 sendCount++;
-                byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
-                txBuffer[1] = bytesHib[0];
-                txBuffer[2] = bytesHib[1];
+            //    byte[] bytesHib = ByteUtil.int2BytesHib(readLength);
+                txBuffer[1] = (byte) (readLength >>> 8);
+                txBuffer[2] = (byte) (readLength & 0xFF);
                 readLength += len;
                 byte[] sendBytes = new byte[txBuffer.length + len];
                 System.arraycopy(txBuffer, 0, sendBytes, 0, txBuffer.length);
@@ -219,7 +218,7 @@ public class TemplateScheme {
         }
         switch (code) {
             case BluetoothManagerBle.CODE_START_DOWNLOAD://下发模板指令回传
-                byte[] callbytes = new byte[]{(byte) 0xa0, (byte) 0x02, (byte) 0x01};
+/*                byte[] callbytes = new byte[]{(byte) 0xa0, (byte) 0x02, (byte) 0x01};
                 if (bytes.length >= 6 && callbytes[0] == bytes[0] && callbytes[0] == bytes[1]
                         && callbytes[1] == bytes[2] && callbytes[2] == bytes[5]) {
                     //收到开始下载回传指令
@@ -231,7 +230,7 @@ public class TemplateScheme {
                     }, 100);
                 }
 
-                break;
+                break;*/
             case BluetoothManagerBle.CODE_HANDSHAKE://握手回传
                 mHander.removeMessages(0);
                 isHandShake = true;

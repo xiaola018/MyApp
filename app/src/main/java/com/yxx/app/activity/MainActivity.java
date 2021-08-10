@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -101,6 +102,38 @@ public class MainActivity extends AppCompatActivity implements
         BluetoothManager.get().bindService(this, this);
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+
+        int a = new BigInteger("ffcc", 16).intValue();
+        int b = new BigInteger("fe98", 16).intValue();
+        int c = new BigInteger("1c200", 16).intValue();
+        int d = new BigInteger("07e5", 16).intValue();
+        int e = new BigInteger("4b00", 16).intValue();
+        LogUtil.d(" == 19200, int to hex == " + Hex.decToHex(19200));
+        LogUtil.d(" == ffcc, hex to int  == " + a);
+        LogUtil.d(" == fe98, hex to int == " + b);
+        LogUtil.d(" == 1c200, hex to int == " + c);
+        LogUtil.d(" == 07e5, hex to int == " + d);
+        LogUtil.d(" == 4b00, hex to int == " + e);
+
+        byte[] bs = new byte[]{0x1c, (byte) 0x200};
+        LogUtil.d(" == bs === " + Arrays.toString(bs));
+
+        String bsHex = Hex.bytesToHex(bs);
+        LogUtil.d("=== bsHex === "  + bsHex);
+
+        byte i1 = (byte) (19200 & 0xFF);//低位
+        byte i2 = (byte) (19200 >>> 8);//高位
+        LogUtil.d(" ==== big === " + i2);
+        LogUtil.d(" ==== little === " + i1);
+        String aHex = Hex.bytesToHex(new byte[]{i2,i1});
+        LogUtil.d("====== iiiii ==== " + aHex);
+        LogUtil.d(" ===== aHex to int == " + new BigInteger(aHex, 16).intValue());
+        LogUtil.d(" ==== i1 === " + Arrays.toString(ByteUtil.int2Bytes(2021)));
+        byte b1 = (byte) 0x4b;
+        byte b2 = (byte) 0x00;
+        LogUtil.d("=== gao === " + b1);
+        LogUtil.d("=== gao === " + b2);
+
     }
 
     private void findView() {

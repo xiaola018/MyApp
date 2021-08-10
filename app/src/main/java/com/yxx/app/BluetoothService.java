@@ -250,7 +250,7 @@ public class BluetoothService extends Service {
     //<editor-fold desc="连接蓝牙">
     public void connect(DeviceModel deviceModel) {
         BluetoothDevice device = deviceModel.mDevice;
-        new Thread(){
+        new Thread() {
             @Override
             public void run() {
                 super.run();
@@ -261,7 +261,7 @@ public class BluetoothService extends Service {
                             mSocket.connect();
                             onBluetoothListener.onConnectSuccess();
                             mOutputStream = mSocket.getOutputStream();
-                            readThread();
+                            new ReadThread().start();
                         } catch (IOException e) {
                             e.printStackTrace();
                             try {
@@ -466,38 +466,36 @@ public class BluetoothService extends Service {
     //</editor-fold>
 
     //<editor-fold desc="从模板读取数据">
-    public void readThread() {
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
+    private class ReadThread extends Thread {
+        @Override
+        public void run() {
+            super.run();
+            try {
+                mInputStream = mSocket.getInputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            byte[] rxbuffer = new byte[128];
+            while (isRead) {
                 try {
-                    mInputStream = mSocket.getInputStream();
+                    int len;
+                    while ((len = mInputStream.read(rxbuffer)) != -1) {
+                        byte[] dataBuffer = new byte[len];
+                        if (dataBuffer.length > 0) {
+                            System.arraycopy(rxbuffer, 0, dataBuffer, 0, dataBuffer.length);
+                            LogUtil.d(String.format("收到数据，readCode : %s , Hex = %s", readCode, Hex.bytesToHex(dataBuffer)));
+                            if (templateCallbackNotNull()) {
+                                mTemplateScheme.read(dataBuffer, readCode);
+                                break;
+                            }
+                        }
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                byte[] rxbuffer = new byte[128];
-                while (isRead) {
-                    try {
-                        int len;
-                        while ((len = mInputStream.read(rxbuffer)) != -1) {
-                            byte[] dataBuffer = new byte[len];
-                            if (dataBuffer.length > 0) {
-                                System.arraycopy(rxbuffer, 0, dataBuffer, 0, dataBuffer.length);
-                                LogUtil.d(String.format("收到数据，readCode : %s , Hex = %s", readCode, Hex.bytesToHex(dataBuffer)));
-                                if (templateCallbackNotNull()) {
-                                    mTemplateScheme.read(dataBuffer, readCode);
-                                    break;
-                                }
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
 
-                }
             }
-        }.start();
+        }
     }
     //</editor-fold>
 }
